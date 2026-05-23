@@ -1,0 +1,52 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+  # Drop anything that isn't a claude_code.* metric — keeps noise out of the pipeline.
+  # Remove this processor if you want to see all OTel data during debugging.
+  filter/sentinel:
+    error_mode: ignore
+    metrics:
+      metric:
+        - 'not IsMatch(name, "^claude_code\\.")'
+
+exporters:
+  # Prints every metric/log to collector stdout — primary verification tool for Stage 3.
+  debug:
+    verbosity: detailed
+
+  # Forwards to the Go ingest handler (built in Stage 4). Will log connection-refused
+  # errors until that handler exists — expected and harmless.
+  otlp_http/sentinel:
+    endpoint: "http://host.docker.internal:8081/ingest/otel"
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_elapsed_time: 60s
+
+service:
+  telemetry:
+    logs:
+      level: info
+
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [filter/sentinel, batch]
+      exporters: [debug, otlp_http/sentinel]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlp_http/sentinel]
