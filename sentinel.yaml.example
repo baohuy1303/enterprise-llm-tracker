@@ -1,0 +1,29 @@
+listen: ":8081"
+
+postgres:
+  url: "postgres://sentinel:sentinel@localhost:5432/sentinel"
+
+redis:
+  addr: "localhost:6379"
+
+kafka:
+  brokers: ["localhost:9092"]
+  topic: "claude.usage.events"
+  consumer_group_prefix: "sentinel"
+
+github:
+  org: "mycompany"
+  repos:
+    - "mycompany/backend"
+    - "mycompany/frontend"
+
+slack:
+  bot_token_env: "SLACK_BOT_TOKEN"
+  default_manager_channel: "#eng-leadership"
+
+thresholds:
+  notify_at_percent: [80, 100]
+  notify_manager_at_percent: [100]
+
+registry:
+  refresh_interval_seconds: 30
