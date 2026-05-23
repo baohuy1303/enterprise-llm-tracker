@@ -1,0 +1,25 @@
+# Binaries
+sentinel-proxy
+sentinel-workers
+*.exe
+
+# Config with secrets
+sentinel.yaml
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+dist/
+bin/
+
+# Go
+vendor/
+
+# Node (Stage 11)
+node_modules/
+.next/
+sentinel-admin/.env.local
+
+sentinel-plan-final.md
