@@ -15,6 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"enterprise-llm-tracker/internal/config"
+	"enterprise-llm-tracker/internal/ingest"
 	"enterprise-llm-tracker/internal/middleware"
 	"enterprise-llm-tracker/internal/registry"
 )
@@ -59,6 +60,8 @@ func main() {
 		s.Count, time.Since(s.LastRefreshAt).Milliseconds())
 	reg.StartRefresh(rootCtx)
 
+	ingestHandler := ingest.New(reg, nil)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -66,6 +69,8 @@ func main() {
 	})
 	mux.HandleFunc("/readyz", readyzHandler(reg))
 	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("POST /ingest/otel/v1/metrics", ingestHandler.Metrics)
+	mux.HandleFunc("POST /ingest/otel/v1/logs", ingestHandler.Logs)
 
 	srv := &http.Server{
 		Addr:    cfg.Listen,
