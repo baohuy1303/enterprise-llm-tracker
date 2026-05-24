@@ -3,10 +3,13 @@ package ingest
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,18 +21,20 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"enterprise-llm-tracker/internal/registry"
+	"enterprise-llm-tracker/internal/store"
 )
 
 type Handler struct {
 	registry *registry.EngineerRegistry
+	store    *store.Store
 	logger   *slog.Logger
 }
 
-func New(reg *registry.EngineerRegistry, logger *slog.Logger) *Handler {
+func New(reg *registry.EngineerRegistry, st *store.Store, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{registry: reg, logger: logger}
+	return &Handler{registry: reg, store: st, logger: logger}
 }
 
 func (h *Handler) Metrics(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +53,7 @@ func (h *Handler) Metrics(w http.ResponseWriter, r *http.Request) {
 		resAttrs := rm.GetResource().GetAttributes()
 		for _, sm := range rm.GetScopeMetrics() {
 			for _, m := range sm.GetMetrics() {
-				h.processMetric(resAttrs, m)
+				h.processMetric(r.Context(), resAttrs, m)
 			}
 		}
 	}
@@ -71,7 +76,7 @@ func (h *Handler) Logs(w http.ResponseWriter, r *http.Request) {
 		resAttrs := rl.GetResource().GetAttributes()
 		for _, sl := range rl.GetScopeLogs() {
 			for _, lr := range sl.GetLogRecords() {
-				h.processLogRecord(resAttrs, lr)
+				h.processLogRecord(r.Context(), resAttrs, lr)
 			}
 		}
 	}
@@ -118,7 +123,10 @@ var metricTypeMap = map[string]string{
 	"claude_code.session.count":       "session",
 }
 
-func (h *Handler) processMetric(resAttrs []*commonpb.KeyValue, m *metricspb.Metric) {
+// processMetric writes one usage_events row per data point and (for cost/token
+// metrics) increments the corresponding Redis counter. Log records use
+// processLogRecord — they go to PG only so Redis isn't double-counted.
+func (h *Handler) processMetric(ctx context.Context, resAttrs []*commonpb.KeyValue, m *metricspb.Metric) {
 	name := m.GetName()
 	if !strings.HasPrefix(name, "claude_code.") {
 		return
@@ -137,11 +145,46 @@ func (h *Handler) processMetric(resAttrs []*commonpb.KeyValue, m *metricspb.Metr
 			continue
 		}
 		attrs := keyValuesToMap(dp.GetAttributes())
+		value := numberValue(dp)
+		ts := time.Unix(0, int64(dp.GetTimeUnixNano()))
+
+		ev := store.Event{
+			EngineerID: engineer,
+			OccurredAt: ts,
+			Source:     "otel_metric",
+			MetricName: name,
+			Model:      attrs["model"],
+			Raw:        attrs,
+		}
+		switch name {
+		case "claude_code.cost.usage":
+			v := value
+			ev.CostUSD = &v
+		case "claude_code.token.usage":
+			v := int(value)
+			switch attrs["type"] {
+			case "input":
+				ev.TokensInput = &v
+			case "output":
+				ev.TokensOutput = &v
+			case "cacheRead":
+				ev.TokensCacheRead = &v
+			case "cacheCreation":
+				ev.TokensCacheCreation = &v
+			}
+		}
+		if err := h.store.WriteEvent(ctx, ev); err != nil {
+			h.logger.Error("store metric failed",
+				slog.String("engineer", engineer),
+				slog.String("metric", name),
+				slog.String("err", err.Error()))
+		}
+
 		args := []any{
 			slog.String("engineer", engineer),
 			slog.String("type", mtype),
-			slog.Float64("value", numberValue(dp)),
-			slog.Time("ts", time.Unix(0, int64(dp.GetTimeUnixNano()))),
+			slog.Float64("value", value),
+			slog.Time("ts", ts),
 		}
 		if v := attrs["model"]; v != "" {
 			args = append(args, slog.String("model", v))
@@ -153,7 +196,9 @@ func (h *Handler) processMetric(resAttrs []*commonpb.KeyValue, m *metricspb.Metr
 	}
 }
 
-func (h *Handler) processLogRecord(resAttrs []*commonpb.KeyValue, lr *logspb.LogRecord) {
+// processLogRecord writes per-event forensic rows to PG. Does not touch Redis
+// counters — those are owned by processMetric to avoid double-counting.
+func (h *Handler) processLogRecord(ctx context.Context, resAttrs []*commonpb.KeyValue, lr *logspb.LogRecord) {
 	attrs := keyValuesToMap(lr.GetAttributes())
 	eventName := lr.GetBody().GetStringValue()
 	if eventName == "" {
@@ -167,10 +212,50 @@ func (h *Handler) processLogRecord(resAttrs []*commonpb.KeyValue, lr *logspb.Log
 		)
 		return
 	}
+
+	ev := store.Event{
+		EngineerID: engineer,
+		OccurredAt: time.Unix(0, int64(lr.GetTimeUnixNano())),
+		Source:     "otel_event",
+		MetricName: eventName,
+		Model:      attrs["model"],
+		Raw:        attrs,
+	}
+	if f, ok := parseFloat(attrs["cost_usd"]); ok {
+		ev.CostUSD = &f
+	}
+	if i, ok := parseInt(attrs["input_tokens"]); ok {
+		ev.TokensInput = &i
+	}
+	if i, ok := parseInt(attrs["output_tokens"]); ok {
+		ev.TokensOutput = &i
+	}
+	if i, ok := parseInt(attrs["cache_read_tokens"]); ok {
+		ev.TokensCacheRead = &i
+	}
+	if i, ok := parseInt(attrs["cache_creation_tokens"]); ok {
+		ev.TokensCacheCreation = &i
+	}
+	// PG insert only — skip Redis increments to avoid double-counting with metric stream.
+	if _, err := h.store.PG.Exec(ctx, `
+		INSERT INTO usage_events
+		  (engineer_id, occurred_at, source, metric_name,
+		   cost_usd, tokens_input, tokens_output, tokens_cache_read, tokens_cache_creation,
+		   model, raw)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+	`, ev.EngineerID, ev.OccurredAt, ev.Source, ev.MetricName,
+		ev.CostUSD, ev.TokensInput, ev.TokensOutput, ev.TokensCacheRead, ev.TokensCacheCreation,
+		ev.Model, mustJSONRaw(ev.Raw)); err != nil {
+		h.logger.Error("store event failed",
+			slog.String("engineer", engineer),
+			slog.String("event", eventName),
+			slog.String("err", err.Error()))
+	}
+
 	args := []any{
 		slog.String("engineer", engineer),
 		slog.String("event", eventName),
-		slog.Time("ts", time.Unix(0, int64(lr.GetTimeUnixNano()))),
+		slog.Time("ts", ev.OccurredAt),
 	}
 	if v := attrs["model"]; v != "" {
 		args = append(args, slog.String("model", v))
@@ -178,13 +263,28 @@ func (h *Handler) processLogRecord(resAttrs []*commonpb.KeyValue, lr *logspb.Log
 	if v := attrs["cost_usd"]; v != "" {
 		args = append(args, slog.String("cost_usd", v))
 	}
-	if v := attrs["input_tokens"]; v != "" {
-		args = append(args, slog.String("input_tokens", v))
-	}
-	if v := attrs["output_tokens"]; v != "" {
-		args = append(args, slog.String("output_tokens", v))
-	}
 	h.logger.Info("usage_log", args...)
+}
+
+func parseFloat(s string) (float64, bool) {
+	if s == "" {
+		return 0, false
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	return f, err == nil
+}
+
+func parseInt(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	i, err := strconv.Atoi(s)
+	return i, err == nil
+}
+
+func mustJSONRaw(m map[string]string) []byte {
+	b, _ := json.Marshal(m)
+	return b
 }
 
 func readBody(r *http.Request) ([]byte, error) {

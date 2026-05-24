@@ -119,6 +119,16 @@ func (r *EngineerRegistry) LookupByGitHub(username string) (*Engineer, bool) {
 	return e, ok
 }
 
+func (r *EngineerRegistry) AllEmails() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]string, 0, len(r.snap.byEmail))
+	for email := range r.snap.byEmail {
+		out = append(out, email)
+	}
+	return out
+}
+
 func (r *EngineerRegistry) Stats() Stats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
