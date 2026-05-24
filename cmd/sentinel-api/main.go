@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -12,14 +11,14 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 
 	"enterprise-llm-tracker/internal/config"
+	apphttp "enterprise-llm-tracker/internal/http"
 	"enterprise-llm-tracker/internal/ingest"
-	"enterprise-llm-tracker/internal/middleware"
 	"enterprise-llm-tracker/internal/migrate"
 	"enterprise-llm-tracker/internal/registry"
+	"enterprise-llm-tracker/internal/service"
 	"enterprise-llm-tracker/internal/store"
 )
 
@@ -83,21 +82,13 @@ func main() {
 		log.Printf("redis counters rebuilt from postgres")
 	}
 
-	ingestHandler := ingest.New(reg, st, nil)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
-	mux.HandleFunc("/readyz", readyzHandler(reg, st))
-	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("POST /ingest/otel/v1/metrics", ingestHandler.Metrics)
-	mux.HandleFunc("POST /ingest/otel/v1/logs", ingestHandler.Logs)
+	ingestSvc := service.NewIngestService(reg, st, slog.Default())
+	ingestHandler := ingest.New(ingestSvc, nil)
+	router := apphttp.NewRouter(ingestHandler, reg, st)
 
 	srv := &http.Server{
 		Addr:    cfg.Listen,
-		Handler: middleware.Logging(mux),
+		Handler: router,
 	}
 
 	go func() {
@@ -125,33 +116,4 @@ func pingWithTimeout(parent context.Context, d time.Duration, ping func(context.
 	ctx, cancel := context.WithTimeout(parent, d)
 	defer cancel()
 	return ping(ctx)
-}
-
-func readyzHandler(reg *registry.EngineerRegistry, st *store.Store) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s := reg.Stats()
-		body := map[string]any{
-			"status":             "ok",
-			"engineer_count":     s.Count,
-			"last_refresh_at":    s.LastRefreshAt.Format(time.RFC3339),
-			"last_refresh_error": s.LastRefreshError,
-		}
-		pingCtx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		if err := st.PG.Ping(pingCtx); err != nil {
-			body["postgres"] = err.Error()
-			body["status"] = "degraded"
-		} else {
-			body["postgres"] = "ok"
-		}
-		if err := st.PingRedis(pingCtx); err != nil {
-			body["redis"] = err.Error()
-			body["status"] = "degraded"
-		} else {
-			body["redis"] = "ok"
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(body)
-	}
 }
