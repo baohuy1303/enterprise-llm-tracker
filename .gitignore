@@ -1,6 +1,6 @@
 # Binaries
 sentinel-proxy
-sentinel-workers
+sentinel-workers.exe
 *.exe
 
 # Config with secrets

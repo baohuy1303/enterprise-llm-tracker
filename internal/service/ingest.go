@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
+	"enterprise-llm-tracker/internal/kafka"
 	"enterprise-llm-tracker/internal/registry"
 	"enterprise-llm-tracker/internal/store"
 )
@@ -23,19 +26,23 @@ var metricTypeMap = map[string]string{
 type IngestService struct {
 	registry *registry.EngineerRegistry
 	store    *store.Store
+	producer *kafka.Producer
 	logger   *slog.Logger
 }
 
-func NewIngestService(reg *registry.EngineerRegistry, st *store.Store, logger *slog.Logger) *IngestService {
+func NewIngestService(reg *registry.EngineerRegistry, st *store.Store, prod *kafka.Producer, logger *slog.Logger) *IngestService {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &IngestService{registry: reg, store: st, logger: logger}
+	return &IngestService{registry: reg, store: st, producer: prod, logger: logger}
 }
 
-// RecordMetric processes a single OTel metric data point: attributes the event
-// to an engineer, maps the metric name to Event fields, and dual-writes to
-// Postgres + Redis via store.WriteEvent.
+// RecordMetric processes a single OTel metric data point:
+//  1. attribute the event to a known engineer (drop if unattributed)
+//  2. map the metric name to Event fields
+//  3. increment Redis counters synchronously (hot-path dashboard reads)
+//  4. publish to Kafka asynchronously (Postgres write + threshold check happen
+//     in the workers binary)
 func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[string]string, name string, value float64, ts time.Time) {
 	if !strings.HasPrefix(name, "claude_code.") {
 		return
@@ -55,6 +62,7 @@ func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[
 	}
 
 	ev := store.Event{
+		EventID:    uuid.NewString(),
 		EngineerID: engineer,
 		OccurredAt: ts,
 		Source:     "otel_metric",
@@ -80,8 +88,14 @@ func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[
 		}
 	}
 
-	if err := s.store.WriteEvent(ctx, ev); err != nil {
-		s.logger.Error("store metric failed",
+	if err := s.store.WriteEventRedis(ctx, ev); err != nil {
+		s.logger.Error("redis write failed",
+			slog.String("engineer", engineer),
+			slog.String("metric", name),
+			slog.String("err", err.Error()))
+	}
+	if err := s.producer.Publish(ctx, ev); err != nil {
+		s.logger.Error("kafka publish failed",
 			slog.String("engineer", engineer),
 			slog.String("metric", name),
 			slog.String("err", err.Error()))
@@ -102,9 +116,10 @@ func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[
 	s.logger.Info("usage_event", args...)
 }
 
-// RecordLogEvent processes a single OTel log record: attributes the event to
-// an engineer and writes to Postgres only (no Redis) to avoid double-counting
-// with the metric stream.
+// RecordLogEvent processes a single OTel log record. Log events are forensic
+// per-prompt records — they don't roll up into Redis counters (the metric
+// stream already covers cost/token accumulation), but they're still published
+// to Kafka so the PG writer captures them in usage_events.
 func (s *IngestService) RecordLogEvent(ctx context.Context, resAttrs, eventAttrs map[string]string, eventName string, ts time.Time) {
 	engineer, known := s.lookupEngineer(eventAttrs, resAttrs)
 	if !known {
@@ -116,6 +131,7 @@ func (s *IngestService) RecordLogEvent(ctx context.Context, resAttrs, eventAttrs
 	}
 
 	ev := store.Event{
+		EventID:    uuid.NewString(),
 		EngineerID: engineer,
 		OccurredAt: ts,
 		Source:     "otel_event",
@@ -139,8 +155,8 @@ func (s *IngestService) RecordLogEvent(ctx context.Context, resAttrs, eventAttrs
 		ev.TokensCacheCreation = &i
 	}
 
-	if err := s.store.WriteLogEvent(ctx, ev); err != nil {
-		s.logger.Error("store event failed",
+	if err := s.producer.Publish(ctx, ev); err != nil {
+		s.logger.Error("kafka publish failed",
 			slog.String("engineer", engineer),
 			slog.String("event", eventName),
 			slog.String("err", err.Error()))

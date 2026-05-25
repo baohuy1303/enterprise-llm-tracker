@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -15,16 +15,12 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"enterprise-llm-tracker/internal/config"
-	apphttp "enterprise-llm-tracker/internal/http"
-	"enterprise-llm-tracker/internal/ingest"
 	appkafka "enterprise-llm-tracker/internal/kafka"
-	"enterprise-llm-tracker/internal/migrate"
 	"enterprise-llm-tracker/internal/registry"
 	"enterprise-llm-tracker/internal/service"
+	"enterprise-llm-tracker/internal/slack"
 	"enterprise-llm-tracker/internal/store"
 )
-
-const usageEventsPartitions = 12
 
 func main() {
 	// .env is optional — in production, env vars come from the orchestrator.
@@ -33,10 +29,6 @@ func main() {
 	configPath := "sentinel.yaml"
 	if v := os.Getenv("SENTINEL_CONFIG"); v != "" {
 		configPath = v
-	}
-	migrationsDir := "migrations"
-	if v := os.Getenv("SENTINEL_MIGRATIONS_DIR"); v != "" {
-		migrationsDir = v
 	}
 
 	cfg, err := config.Load(configPath)
@@ -56,14 +48,6 @@ func main() {
 		log.Fatalf("postgres ping: %v", err)
 	}
 
-	applied, err := migrate.Apply(rootCtx, pgPool, migrationsDir)
-	if err != nil {
-		log.Fatalf("migrate: %v", err)
-	}
-	if len(applied) > 0 {
-		log.Printf("migrations applied: %v", applied)
-	}
-
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.Redis.Addr})
 	defer rdb.Close()
 	if err := pingWithTimeout(rootCtx, 5*time.Second, func(ctx context.Context) error {
@@ -72,59 +56,76 @@ func main() {
 		log.Fatalf("redis ping: %v", err)
 	}
 
-	if err := appkafka.EnsureTopic(cfg.Kafka.Brokers, cfg.Kafka.Topic, usageEventsPartitions); err != nil {
-		log.Printf("kafka EnsureTopic warning: %v (continuing — topic may already exist)", err)
-	} else {
-		log.Printf("kafka topic %q ready (%d partitions)", cfg.Kafka.Topic, usageEventsPartitions)
-	}
-	producer := appkafka.NewProducer(cfg.Kafka.Brokers, cfg.Kafka.Topic, slog.Default())
-	defer producer.Close()
-
 	st := store.New(pgPool, rdb)
 
 	reg := registry.New(pgPool, time.Duration(cfg.Registry.RefreshIntervalSeconds)*time.Second)
 	if err := reg.Load(rootCtx); err != nil {
 		log.Fatalf("registry initial load: %v", err)
 	}
-	rs := reg.Stats()
-	log.Printf("registry loaded %d active engineers, last refresh %dms ago",
-		rs.Count, time.Since(rs.LastRefreshAt).Milliseconds())
 	reg.StartRefresh(rootCtx)
 
-	if err := st.RebuildCounters(rootCtx, reg.AllEmails(), slog.Default()); err != nil {
-		log.Printf("redis counter rebuild: %v", err)
-	} else {
-		log.Printf("redis counters rebuilt from postgres")
+	slackToken := os.Getenv(cfg.Slack.BotTokenEnv)
+	slackClient := slack.New(slackToken, slog.Default())
+	if !slackClient.Configured() {
+		log.Printf("warning: %s not set — threshold worker will log instead of posting to Slack",
+			cfg.Slack.BotTokenEnv)
 	}
 
-	ingestSvc := service.NewIngestService(reg, st, producer, slog.Default())
-	ingestHandler := ingest.New(ingestSvc, nil)
-	router := apphttp.NewRouter(ingestHandler, reg, st)
+	thresholdSvc := service.NewThresholdService(st, reg, slackClient, cfg.Thresholds, slog.Default())
+	persistSvc := service.NewPersistService(st, slog.Default())
 
-	srv := &http.Server{
-		Addr:    cfg.Listen,
-		Handler: router,
+	prefix := cfg.Kafka.ConsumerGroupPrefix
+	if prefix == "" {
+		prefix = "sentinel"
 	}
 
-	go func() {
-		log.Printf("sentinel-api listening on %s", cfg.Listen)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
-		}
-	}()
+	consumers := []struct {
+		groupID string
+		handler appkafka.Handler
+	}{
+		{prefix + ".threshold-checker", thresholdSvc.HandleEvent},
+		{prefix + ".postgres-writer", persistSvc.HandleEvent},
+		{prefix + ".github-trigger", stubGitHubTrigger},
+	}
+
+	var wg sync.WaitGroup
+	closers := make([]*appkafka.Consumer, 0, len(consumers))
+	for _, c := range consumers {
+		consumer := appkafka.NewConsumer(cfg.Kafka.Brokers, cfg.Kafka.Topic, c.groupID, slog.Default())
+		closers = append(closers, consumer)
+		wg.Add(1)
+		go func(name string, h appkafka.Handler) {
+			defer wg.Done()
+			if err := consumer.Run(rootCtx, h); err != nil {
+				log.Printf("consumer %s exited with error: %v", name, err)
+			}
+		}(c.groupID, c.handler)
+	}
+
+	log.Printf("sentinel-workers started (%d consumers on topic %q)", len(consumers), cfg.Kafka.Topic)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
 
 	log.Println("shutting down...")
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdownCancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatal("forced shutdown:", err)
-	}
 	rootCancel()
+	for _, c := range closers {
+		_ = c.Close()
+	}
+	wg.Wait()
 	log.Println("exited")
+}
+
+// stubGitHubTrigger is a placeholder for Stage 7 — for now, just log when
+// commit/PR events flow by so we can verify the consumer wiring works.
+func stubGitHubTrigger(_ context.Context, e store.Event) error {
+	if e.MetricName == "claude_code.pull_request.count" || e.MetricName == "claude_code.commit.count" {
+		slog.Default().Info("github_trigger_stub",
+			slog.String("engineer", e.EngineerID),
+			slog.String("metric", e.MetricName))
+	}
+	return nil
 }
 
 func pingWithTimeout(parent context.Context, d time.Duration, ping func(context.Context) error) error {

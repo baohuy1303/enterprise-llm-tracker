@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -16,8 +17,8 @@ import (
 var luaScripts embed.FS
 
 type Store struct {
-	pg    *pgxpool.Pool
-	rdb   *redis.Client
+	pg  *pgxpool.Pool
+	rdb *redis.Client
 
 	incrFloat *redis.Script
 	incrInt   *redis.Script
@@ -48,22 +49,10 @@ func (s *Store) PingRedis(ctx context.Context) error {
 	return s.rdb.Ping(ctx).Err()
 }
 
-// WriteEvent inserts to usage_events and increments Redis cost/token counters.
-// Used for the OTel metric stream (source="otel_metric").
-func (s *Store) WriteEvent(ctx context.Context, e Event) error {
-	raw, _ := json.Marshal(e.Raw)
-	if _, err := s.pg.Exec(ctx, `
-		INSERT INTO usage_events
-		  (engineer_id, occurred_at, source, metric_name,
-		   cost_usd, tokens_input, tokens_output, tokens_cache_read, tokens_cache_creation,
-		   model, raw)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-	`, e.EngineerID, e.OccurredAt, e.Source, e.MetricName,
-		e.CostUSD, e.TokensInput, e.TokensOutput, e.TokensCacheRead, e.TokensCacheCreation,
-		e.Model, raw); err != nil {
-		return fmt.Errorf("pg insert: %w", err)
-	}
-
+// WriteEventRedis increments Redis cost/token counters for a metric event.
+// No-ops for events without CostUSD or token deltas (e.g. log events).
+// Used by the ingest hot path — must be fast and never block.
+func (s *Store) WriteEventRedis(ctx context.Context, e Event) error {
 	now := time.Now().UTC()
 	eod := endOfDayUTC(now).Unix()
 	eom := endOfMonthUTC(now).Unix()
@@ -104,23 +93,75 @@ func (s *Store) WriteEvent(ctx context.Context, e Event) error {
 	return nil
 }
 
-// WriteLogEvent inserts to usage_events without touching Redis counters.
-// Used for the OTel log stream (source="otel_event") to avoid double-counting
-// with WriteEvent, which already owns the Redis increments for the metric stream.
-func (s *Store) WriteLogEvent(ctx context.Context, e Event) error {
+// WriteEventPG inserts an event into usage_events. Idempotent via the event_id
+// unique constraint: replaying the same event from Kafka is a no-op.
+// Called by the Postgres writer consumer; not on the ingest hot path.
+func (s *Store) WriteEventPG(ctx context.Context, e Event) error {
 	raw, _ := json.Marshal(e.Raw)
+	var eventID any
+	if e.EventID != "" {
+		eventID = e.EventID
+	}
 	if _, err := s.pg.Exec(ctx, `
 		INSERT INTO usage_events
-		  (engineer_id, occurred_at, source, metric_name,
+		  (event_id, engineer_id, occurred_at, source, metric_name,
 		   cost_usd, tokens_input, tokens_output, tokens_cache_read, tokens_cache_creation,
 		   model, raw)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-	`, e.EngineerID, e.OccurredAt, e.Source, e.MetricName,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+		ON CONFLICT (event_id) DO NOTHING
+	`, eventID, e.EngineerID, e.OccurredAt, e.Source, e.MetricName,
 		e.CostUSD, e.TokensInput, e.TokensOutput, e.TokensCacheRead, e.TokensCacheCreation,
 		e.Model, raw); err != nil {
 		return fmt.Errorf("pg insert: %w", err)
 	}
 	return nil
+}
+
+// GetCostCounter reads engineer:{email}:cost:{period} from Redis. Returns 0 if
+// the key is missing (no spend yet today/this month).
+func (s *Store) GetCostCounter(ctx context.Context, email, period string) (float64, error) {
+	v, err := s.rdb.Get(ctx, costKey(email, period)).Float64()
+	if errors.Is(err, redis.Nil) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return v, nil
+}
+
+// ClaimThresholdFired atomically claims the "fired" flag for an (engineer,
+// period, pct) tuple. Returns true if this caller won the claim and should
+// send the Slack DM; false if another caller already claimed it. The claim key
+// expires at end of period so the next period starts fresh.
+func (s *Store) ClaimThresholdFired(ctx context.Context, email, period string, pct int, expireAt time.Time) (bool, error) {
+	key := thresholdFiredKey(email, period, pct)
+	ttl := time.Until(expireAt)
+	if ttl <= 0 {
+		// Period already over — nothing to dedupe against. Skip the claim.
+		return false, nil
+	}
+	ok, err := s.rdb.SetNX(ctx, key, "1", ttl).Result()
+	if err != nil {
+		return false, err
+	}
+	return ok, nil
+}
+
+// WriteThresholdTrigger appends a row to the threshold_triggers audit log.
+func (s *Store) WriteThresholdTrigger(ctx context.Context, t ThresholdTrigger) error {
+	var slackTS any
+	if t.SlackMessageTS != "" {
+		slackTS = t.SlackMessageTS
+	}
+	_, err := s.pg.Exec(ctx, `
+		INSERT INTO threshold_triggers
+		  (engineer_id, period, threshold_pct, triggered_at,
+		   spend_at_trigger_usd, budget_usd, slack_message_ts, notified_manager)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+	`, t.EngineerID, t.Period, t.ThresholdPct, t.TriggeredAt,
+		t.SpendAtTriggerUSD, t.BudgetUSD, slackTS, t.NotifiedManager)
+	return err
 }
 
 // RebuildCounters reseeds today/month Redis counters from Postgres.
@@ -192,6 +233,17 @@ func tokensKey(email, period string) string {
 func lastOtelKey(email string) string {
 	return fmt.Sprintf("engineer:%s:last_otel_at", email)
 }
+
+func thresholdFiredKey(email, period string, pct int) string {
+	return fmt.Sprintf("engineer:%s:threshold_fired:%s:%d", email, period, pct)
+}
+
+// EndOfDayUTC returns the last second of the current UTC day.
+// Exported for use by the threshold service when computing claim TTLs.
+func EndOfDayUTC(t time.Time) time.Time { return endOfDayUTC(t) }
+
+// EndOfMonthUTC returns the last second of the current UTC month.
+func EndOfMonthUTC(t time.Time) time.Time { return endOfMonthUTC(t) }
 
 func endOfDayUTC(t time.Time) time.Time {
 	y, m, d := t.UTC().Date()
