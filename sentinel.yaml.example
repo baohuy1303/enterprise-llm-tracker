@@ -1,7 +1,7 @@
 listen: ":8081"
 
 postgres:
-  url: "postgres://sentinel:sentinel@localhost:5432/sentinel"
+  url: "postgres://sentinel:sentinel@localhost:5433/sentinel?sslmode=disable"
 
 redis:
   addr: "localhost:6379"
@@ -12,10 +12,18 @@ kafka:
   consumer_group_prefix: "sentinel"
 
 github:
+  # For a GitHub organization: set org to the org name, omit is_user (defaults false).
+  # For a personal account: set org to your GitHub username and is_user: true.
   org: "mycompany"
+  # is_user: true
   repos:
     - "mycompany/backend"
     - "mycompany/frontend"
+  token_env: "GITHUB_TOKEN"     # env var holding your PAT (needs `repo` scope)
+  lookback_days: 30             # how far back the PR fetcher pages; use 180 for historical data
+  scheduler:
+    interval_seconds: 3600           # hourly safety net cron tick
+    min_trigger_interval_seconds: 300 # debounce Kafka-driven refreshes to once per 5 min
 
 slack:
   bot_token_env: "SLACK_BOT_TOKEN"
@@ -27,3 +35,6 @@ thresholds:
 
 registry:
   refresh_interval_seconds: 30
+
+admin:
+  token_env: "ADMIN_TOKEN"     # env var holding the bearer token for /admin/* endpoints

@@ -11,10 +11,17 @@ import (
 	"enterprise-llm-tracker/internal/ingest"
 	"enterprise-llm-tracker/internal/middleware"
 	"enterprise-llm-tracker/internal/registry"
+	"enterprise-llm-tracker/internal/service"
 	"enterprise-llm-tracker/internal/store"
 )
 
-func NewRouter(ih *ingest.Handler, reg *registry.EngineerRegistry, st *store.Store, adminToken string) http.Handler {
+func NewRouter(
+	ih *ingest.Handler,
+	reg *registry.EngineerRegistry,
+	st *store.Store,
+	engineerSvc *service.EngineerService,
+	adminToken string,
+) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", healthz)
@@ -24,10 +31,22 @@ func NewRouter(ih *ingest.Handler, reg *registry.EngineerRegistry, st *store.Sto
 
 	// Admin endpoints: gated by bearer-token middleware. Mounted on the same
 	// mux as ingest because they share the request-logging middleware below.
-	admin := NewAdminHandlers(st, nil)
+	admin := NewAdminHandlers(st, engineerSvc, nil)
+	engineers := NewEngineerHandlers(engineerSvc, nil)
+
 	adminMux := http.NewServeMux()
+	// engineer CRUD
+	adminMux.HandleFunc("POST /admin/engineers", engineers.Create)
+	adminMux.HandleFunc("GET /admin/engineers", engineers.List)
+	adminMux.HandleFunc("GET /admin/engineers/{email}", engineers.Get)
+	adminMux.HandleFunc("PUT /admin/engineers/{email}", engineers.Update)
+	adminMux.HandleFunc("DELETE /admin/engineers/{email}", engineers.Delete)
+	// analytics + ops
 	adminMux.HandleFunc("GET /admin/leaderboard", admin.Leaderboard)
+	adminMux.HandleFunc("GET /admin/usage/recent", admin.RecentUsage)
 	adminMux.HandleFunc("POST /admin/refresh-efficiency", admin.RefreshEfficiency)
+	adminMux.HandleFunc("POST /admin/registry/refresh", admin.RefreshRegistry)
+
 	mux.Handle("/admin/", middleware.BearerAuth(adminToken, adminMux))
 
 	// /metrics sits outside the logging middleware so scrape requests don't

@@ -1,0 +1,161 @@
+### Sentinel REST API — manual test harness
+### Use with the VS Code REST Client extension or JetBrains HTTP Client.
+### Click "Send Request" above any block, or right-click → Run All.
+
+@host = http://localhost:8081
+@adminToken = 123
+@email = alice@example.com
+
+### ---------------------------------------------------------------
+### Health
+### ---------------------------------------------------------------
+
+### Healthcheck (no auth)
+GET {{host}}/healthz
+
+### Readiness probe (no auth) — shows engineer count + backend status
+GET {{host}}/readyz
+
+### Prometheus metrics (no auth)
+GET {{host}}/metrics
+
+### ---------------------------------------------------------------
+### Engineer CRUD
+### ---------------------------------------------------------------
+
+### Create a new engineer
+POST {{host}}/admin/engineers
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "name": "Alice Example",
+  "github_username": "alice-example",
+  "slack_user_id": "U0ABCDEF",
+  "manager_slack_id": "U0MGRABC",
+  "daily_budget_usd": 25.00,
+  "monthly_budget_usd": 500.00,
+  "team": "platform"
+}
+
+### Create with duplicate email → expect 409
+POST {{host}}/admin/engineers
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "name": "Alice Dupe",
+  "github_username": "alice-dupe"
+}
+
+### Create with invalid email → expect 400
+POST {{host}}/admin/engineers
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "name": "Bad",
+  "github_username": "bad"
+}
+
+### List all active engineers (with live Redis spend joined)
+GET {{host}}/admin/engineers
+Authorization: Bearer {{adminToken}}
+
+### Get one engineer's detail (history, triggers, latest efficiency snapshot)
+GET {{host}}/admin/engineers/{{email}}
+Authorization: Bearer {{adminToken}}
+
+### Partial update — change just the daily budget
+PUT {{host}}/admin/engineers/{{email}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "daily_budget_usd": 50.00
+}
+
+### Partial update — change name + team
+PUT {{host}}/admin/engineers/{{email}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Alice Renamed",
+  "team": "infrastructure"
+}
+
+### Update unknown engineer → expect 404
+PUT {{host}}/admin/engineers/nobody@example.com
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Nobody"
+}
+
+### Soft-delete (sets active = FALSE; historical data preserved)
+DELETE {{host}}/admin/engineers/{{email}}
+Authorization: Bearer {{adminToken}}
+
+### Delete unknown engineer → expect 404
+DELETE {{host}}/admin/engineers/nobody@example.com
+Authorization: Bearer {{adminToken}}
+
+### ---------------------------------------------------------------
+### Analytics
+### ---------------------------------------------------------------
+
+### Leaderboard, 1 day window
+GET {{host}}/admin/leaderboard?window=1d
+Authorization: Bearer {{adminToken}}
+
+### Leaderboard, 7 day window (default)
+GET {{host}}/admin/leaderboard?window=7d
+Authorization: Bearer {{adminToken}}
+
+### Leaderboard, 30 day window
+GET {{host}}/admin/leaderboard?window=30d
+Authorization: Bearer {{adminToken}}
+
+### Leaderboard, 180 day window
+GET {{host}}/admin/leaderboard?window=180d
+Authorization: Bearer {{adminToken}}
+
+### Invalid window → expect 400
+GET {{host}}/admin/leaderboard?window=999d
+Authorization: Bearer {{adminToken}}
+
+### Recent usage events (default limit 100)
+GET {{host}}/admin/usage/recent
+Authorization: Bearer {{adminToken}}
+
+### Recent usage events with custom limit
+GET {{host}}/admin/usage/recent?limit=25
+Authorization: Bearer {{adminToken}}
+
+### ---------------------------------------------------------------
+### Ops triggers
+### ---------------------------------------------------------------
+
+### Force the GitHub collector to run now (async; returns 202)
+POST {{host}}/admin/refresh-efficiency
+Authorization: Bearer {{adminToken}}
+
+### Force an immediate engineer-registry reload from Postgres
+POST {{host}}/admin/registry/refresh
+Authorization: Bearer {{adminToken}}
+
+### ---------------------------------------------------------------
+### Auth failures
+### ---------------------------------------------------------------
+
+### No Authorization header → expect 401
+GET {{host}}/admin/engineers
+
+### Wrong bearer token → expect 401
+GET {{host}}/admin/engineers
+Authorization: Bearer not-the-right-token

@@ -100,6 +100,8 @@ func main() {
 	ingestSvc := service.NewIngestService(reg, st, producer, slog.Default())
 	ingestHandler := ingest.New(ingestSvc, nil)
 
+	engineerSvc := service.NewEngineerService(st, reg, slog.Default())
+
 	adminToken := ""
 	if cfg.Admin.TokenEnv != "" {
 		adminToken = os.Getenv(cfg.Admin.TokenEnv)
@@ -108,7 +110,7 @@ func main() {
 		log.Printf("warning: %s not set — /admin/* endpoints will return 503 until configured",
 			cfg.Admin.TokenEnv)
 	}
-	router := apphttp.NewRouter(ingestHandler, reg, st, adminToken)
+	router := apphttp.NewRouter(ingestHandler, reg, st, engineerSvc, adminToken)
 
 	srv := &http.Server{
 		Addr:    cfg.Listen,
