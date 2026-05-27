@@ -22,6 +22,7 @@ var efficiencyWindows = []efficiencyWindow{
 	{name: "1d", days: 1},
 	{name: "7d", days: 7},
 	{name: "30d", days: 30},
+	{name: "180d", days: 180},
 }
 
 // EfficiencyCollector orchestrates the GitHub fetch → revert detect →

@@ -80,6 +80,9 @@ func (t *ThresholdService) checkPeriod(ctx context.Context, eng *registry.Engine
 
 	pct := (spend / budget) * 100
 
+	// Fire at most one threshold per event — the lowest unclaimed one.
+	// If the spend already exceeds a higher tier, it fires on the next event.
+	// This ensures 80% and 100% always arrive as separate Slack messages.
 	for _, threshold := range t.cfg.NotifyAtPercent {
 		if pct < float64(threshold) {
 			continue
@@ -99,6 +102,7 @@ func (t *ThresholdService) checkPeriod(ctx context.Context, eng *registry.Engine
 		}
 
 		t.fireThreshold(ctx, eng, period, threshold, spend, budget)
+		break // one DM per event; next event fires the next tier
 	}
 }
 
