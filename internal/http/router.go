@@ -14,13 +14,21 @@ import (
 	"enterprise-llm-tracker/internal/store"
 )
 
-func NewRouter(ih *ingest.Handler, reg *registry.EngineerRegistry, st *store.Store) http.Handler {
+func NewRouter(ih *ingest.Handler, reg *registry.EngineerRegistry, st *store.Store, adminToken string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /healthz", healthz)
 	mux.HandleFunc("GET /readyz", readyz(reg, st))
 	mux.HandleFunc("POST /ingest/otel/v1/metrics", ih.Metrics)
 	mux.HandleFunc("POST /ingest/otel/v1/logs", ih.Logs)
+
+	// Admin endpoints: gated by bearer-token middleware. Mounted on the same
+	// mux as ingest because they share the request-logging middleware below.
+	admin := NewAdminHandlers(st, nil)
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("GET /admin/leaderboard", admin.Leaderboard)
+	adminMux.HandleFunc("POST /admin/refresh-efficiency", admin.RefreshEfficiency)
+	mux.Handle("/admin/", middleware.BearerAuth(adminToken, adminMux))
 
 	// /metrics sits outside the logging middleware so scrape requests don't
 	// pollute the very metrics being scraped.

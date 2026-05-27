@@ -17,6 +17,36 @@ type Event struct {
 	Raw                 map[string]string `json:"raw,omitempty"`
 }
 
+// GitHubPR mirrors the github_prs row. Files holds the list of file paths
+// touched by the PR — used by the revert detector for file-overlap scoring.
+type GitHubPR struct {
+	EngineerGitHub string
+	Repo           string
+	PRNumber       int
+	Title          string
+	State          string // "OPEN" | "CLOSED" | "MERGED"
+	CreatedAt      time.Time
+	MergedAt       *time.Time
+	ReviewCount    int
+	FilesChanged   int
+	Files          []string
+	Reverted       bool
+	RevertedAt     *time.Time
+	LastSyncedAt   time.Time
+}
+
+// EfficiencySnapshot is a per-engineer rollup over a window.
+type EfficiencySnapshot struct {
+	EngineerID         string
+	WindowStart        time.Time
+	WindowEnd          time.Time
+	CostUSD            float64
+	MergedPRCount      int
+	RevertRate         float64 // 0..1
+	DollarsPerMergedPR float64 // 0 when MergedPRCount == 0
+	ComputedAt         time.Time
+}
+
 type ThresholdTrigger struct {
 	EngineerID         string
 	Period             string  // "daily" or "monthly"

@@ -15,6 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"enterprise-llm-tracker/internal/config"
+	appgithub "enterprise-llm-tracker/internal/github"
 	appkafka "enterprise-llm-tracker/internal/kafka"
 	"enterprise-llm-tracker/internal/registry"
 	"enterprise-llm-tracker/internal/service"
@@ -74,6 +75,24 @@ func main() {
 	thresholdSvc := service.NewThresholdService(st, reg, slackClient, cfg.Thresholds, slog.Default())
 	persistSvc := service.NewPersistService(st, slog.Default())
 
+	// GitHub efficiency collector — only enabled when a token + org are
+	// configured. Without those, the github-trigger consumer becomes a no-op.
+	var collector *service.EfficiencyCollector
+	githubToken := ""
+	if cfg.GitHub.TokenEnv != "" {
+		githubToken = os.Getenv(cfg.GitHub.TokenEnv)
+	}
+	if githubToken != "" && cfg.GitHub.Org != "" {
+		ghClient := appgithub.New(githubToken, slog.Default())
+		collector = service.NewEfficiencyCollector(ghClient, st, reg, cfg.GitHub, slog.Default())
+		go collector.Run(rootCtx)
+		log.Printf("efficiency collector started (org=%q, interval=%ds)",
+			cfg.GitHub.Org, cfg.GitHub.Scheduler.IntervalSeconds)
+	} else {
+		log.Printf("efficiency collector disabled — set %s and github.org to enable",
+			cfg.GitHub.TokenEnv)
+	}
+
 	prefix := cfg.Kafka.ConsumerGroupPrefix
 	if prefix == "" {
 		prefix = "sentinel"
@@ -85,7 +104,7 @@ func main() {
 	}{
 		{prefix + ".threshold-checker", thresholdSvc.HandleEvent},
 		{prefix + ".postgres-writer", persistSvc.HandleEvent},
-		{prefix + ".github-trigger", stubGitHubTrigger},
+		{prefix + ".github-trigger", githubTriggerHandler(st, reg, collector, slog.Default())},
 	}
 
 	var wg sync.WaitGroup
@@ -117,15 +136,37 @@ func main() {
 	log.Println("exited")
 }
 
-// stubGitHubTrigger is a placeholder for Stage 7 — for now, just log when
-// commit/PR events flow by so we can verify the consumer wiring works.
-func stubGitHubTrigger(_ context.Context, e store.Event) error {
-	if e.MetricName == "claude_code.pull_request.count" || e.MetricName == "claude_code.commit.count" {
-		slog.Default().Info("github_trigger_stub",
-			slog.String("engineer", e.EngineerID),
-			slog.String("metric", e.MetricName))
+// githubTriggerHandler reacts to commit/pull-request OTel events by marking
+// the engineer's github_username dirty in Redis and signaling the collector
+// to run. The collector debounces, so a flood of events coalesces into at
+// most one run per MinTriggerIntervalSeconds.
+//
+// If the collector is nil (token/org not configured), this is a no-op — we
+// still drain the Kafka offset so messages don't pile up.
+func githubTriggerHandler(
+	st *store.Store,
+	reg *registry.EngineerRegistry,
+	collector *service.EfficiencyCollector,
+	logger *slog.Logger,
+) appkafka.Handler {
+	return func(ctx context.Context, e store.Event) error {
+		if e.MetricName != "claude_code.pull_request.count" &&
+			e.MetricName != "claude_code.commit.count" {
+			return nil
+		}
+		if collector == nil {
+			return nil
+		}
+		if eng, ok := reg.LookupByEmail(e.EngineerID); ok && eng.GitHubUsername != "" {
+			if err := st.MarkEngineerDirty(ctx, eng.GitHubUsername); err != nil {
+				logger.Warn("mark dirty failed",
+					slog.String("github", eng.GitHubUsername),
+					slog.String("err", err.Error()))
+			}
+		}
+		collector.Trigger()
+		return nil
 	}
-	return nil
 }
 
 func pingWithTimeout(parent context.Context, d time.Duration, ping func(context.Context) error) error {

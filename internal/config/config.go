@@ -16,6 +16,7 @@ type Config struct {
 	Slack      SlackConfig      `yaml:"slack"`
 	Thresholds ThresholdsConfig `yaml:"thresholds"`
 	Registry   RegistryConfig   `yaml:"registry"`
+	Admin      AdminConfig      `yaml:"admin"`
 }
 
 type PostgresConfig struct {
@@ -33,8 +34,28 @@ type KafkaConfig struct {
 }
 
 type GitHubConfig struct {
-	Org   string   `yaml:"org"`
-	Repos []string `yaml:"repos"`
+	Org       string          `yaml:"org"`
+	Repos     []string        `yaml:"repos"`
+	TokenEnv  string          `yaml:"token_env"`
+	Scheduler SchedulerConfig `yaml:"scheduler"`
+	// LookbackDays bounds how far back the PR/commit fetcher pages.
+	LookbackDays int `yaml:"lookback_days"`
+	// IsUser controls whether the search uses `user:ORG` (personal account)
+	// or `org:ORG` (GitHub organization). Set to true when Org is a personal
+	// GitHub username rather than an organization name.
+	IsUser bool `yaml:"is_user"`
+}
+
+type SchedulerConfig struct {
+	// IntervalSeconds is the cron tick interval for the GitHub collector.
+	IntervalSeconds int `yaml:"interval_seconds"`
+	// MinTriggerIntervalSeconds debounces Kafka-driven refreshes — back-to-back
+	// triggers within this window coalesce into one run.
+	MinTriggerIntervalSeconds int `yaml:"min_trigger_interval_seconds"`
+}
+
+type AdminConfig struct {
+	TokenEnv string `yaml:"token_env"`
 }
 
 type SlackConfig struct {
@@ -81,6 +102,15 @@ func (c *Config) Validate() error {
 	}
 	if c.Registry.RefreshIntervalSeconds <= 0 {
 		c.Registry.RefreshIntervalSeconds = 30
+	}
+	if c.GitHub.Scheduler.IntervalSeconds <= 0 {
+		c.GitHub.Scheduler.IntervalSeconds = 3600
+	}
+	if c.GitHub.Scheduler.MinTriggerIntervalSeconds <= 0 {
+		c.GitHub.Scheduler.MinTriggerIntervalSeconds = 300
+	}
+	if c.GitHub.LookbackDays <= 0 {
+		c.GitHub.LookbackDays = 30
 	}
 	return nil
 }

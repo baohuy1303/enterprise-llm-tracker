@@ -129,6 +129,32 @@ func (r *EngineerRegistry) AllEmails() []string {
 	return out
 }
 
+// AllGitHubUsernames returns the github_username of every active engineer.
+// Skips engineers with an empty username so callers can range without nil checks.
+func (r *EngineerRegistry) AllGitHubUsernames() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]string, 0, len(r.snap.byGitHub))
+	for u := range r.snap.byGitHub {
+		if u != "" {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+// AllActive returns a copy of every active engineer record. Callers may iterate
+// freely; the returned slice is detached from the registry's internal snapshot.
+func (r *EngineerRegistry) AllActive() []Engineer {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]Engineer, 0, len(r.snap.byEmail))
+	for _, e := range r.snap.byEmail {
+		out = append(out, *e)
+	}
+	return out
+}
+
 func (r *EngineerRegistry) Stats() Stats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
