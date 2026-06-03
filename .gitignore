@@ -23,3 +23,5 @@ node_modules/
 sentinel-admin/.env.local
 
 sentinel-plan-final.md
+TEST_STAGE_0_to_9.md
+run_tests.ps1

@@ -1,0 +1,55 @@
+## Test config — identical to sentinel.yaml except the signal crons run fast
+## and the baseline gate is lowered so detection enables with little history.
+## Point both binaries at it:  $env:SENTINEL_CONFIG = "sentinel.test.yaml"
+## Your real sentinel.yaml is left untouched.
+
+listen: ":8081"
+
+postgres:
+  url: "postgres://sentinel:sentinel@localhost:5433/sentinel?sslmode=disable"
+
+redis:
+  addr: "localhost:6379"
+
+kafka:
+  brokers: ["localhost:9092"]
+  topic: "claude.usage.events"
+  consumer_group_prefix: "sentinel"
+
+github:
+  org: "baohuy1303"
+  is_user: true
+  repos:
+    - "nani-web"
+  token_env: "GITHUB_TOKEN"
+  lookback_days: 180
+  scheduler:
+    interval_seconds: 3600            # we trigger manually via /admin/refresh-efficiency
+    min_trigger_interval_seconds: 5   # tiny debounce so manual triggers aren't swallowed
+
+slack:
+  bot_token_env: "SLACK_BOT_TOKEN"
+  default_manager_channel: "#eng-leadership"
+
+thresholds:
+  notify_at_percent: [25, 50, 75, 100]
+  notify_manager_at_percent: [100]
+
+registry:
+  refresh_interval_seconds: 30
+
+admin:
+  token_env: "ADMIN_TOKEN"
+
+signals:
+  baseline_rebuild_interval_seconds: 30    # was 86400 — fast for testing
+  efficiency_rollup_interval_seconds: 30   # was 86400 — fast for testing
+  baseline_window_days: 30
+  hourly_baseline_window_days: 14
+  min_baseline_days: 2                     # was 14 — enable z-score/rhythm with little history
+  burst_window_minutes: 30
+  burst_multiplier: 2.0
+  zscore_warn: 2.0
+  zscore_critical: 3.0
+  rhythm_break_pct: 0.05
+  notify_burst_critical: true

@@ -230,11 +230,11 @@ func (d *SignalDetector) notifyBurst(ctx context.Context, eng *registry.Engineer
 	}
 	notifiedAt := time.Now().UTC()
 	engineerMsg := fmt.Sprintf(
-		"🚨 Burst alert: $%.2f spent in the last %d min — that's %.1fx your normal hourly rate ($%.2f/hr). Check whether something's running away.",
-		observed, d.cfg.BurstWindowMinutes, observed/baseline, baseline,
+		"🚨 Burst alert (%s): $%.2f spent in the last %d min — that's %.1fx your normal hourly rate ($%.2f/hr). Check whether something's running away.",
+		eng.Name, observed, d.cfg.BurstWindowMinutes, observed/baseline, baseline,
 	)
 	managerMsg := fmt.Sprintf(
-		"%s just burned $%.2f in %d min (%.1fx their normal hourly rate). Worth a check.",
+		"[manager alert] %s just burned $%.2f in %d min (%.1fx their normal hourly rate). Worth a check.",
 		eng.Name, observed, d.cfg.BurstWindowMinutes, observed/baseline,
 	)
 
