@@ -17,6 +17,7 @@ type Config struct {
 	Thresholds ThresholdsConfig `yaml:"thresholds"`
 	Registry   RegistryConfig   `yaml:"registry"`
 	Admin      AdminConfig      `yaml:"admin"`
+	Signals    SignalsConfig    `yaml:"signals"`
 }
 
 type PostgresConfig struct {
@@ -72,6 +73,48 @@ type RegistryConfig struct {
 	RefreshIntervalSeconds int `yaml:"refresh_interval_seconds"`
 }
 
+// SignalsConfig drives the signal-analytics subsystem in sentinel-workers.
+// Defaults applied in Validate(); leaving the section empty in YAML is fine.
+type SignalsConfig struct {
+	// BaselineRebuildIntervalSeconds is the cron tick for the nightly job that
+	// rebuilds per-engineer baselines (mean, stddev, hourly p95, hour-of-day
+	// distribution). Defaults to 24h.
+	BaselineRebuildIntervalSeconds int `yaml:"baseline_rebuild_interval_seconds"`
+	// EfficiencyRollupIntervalSeconds is the cron tick for the nightly job
+	// that aggregates usage_events + github_prs into engineer_signals.
+	// Defaults to 24h.
+	EfficiencyRollupIntervalSeconds int `yaml:"efficiency_rollup_interval_seconds"`
+	// BaselineWindowDays bounds how far back we look when rebuilding the
+	// daily-spend mean/stddev (defaults to 30).
+	BaselineWindowDays int `yaml:"baseline_window_days"`
+	// HourlyBaselineWindowDays bounds how far back we look for the hourly p95
+	// used by burst detection (defaults to 14).
+	HourlyBaselineWindowDays int `yaml:"hourly_baseline_window_days"`
+	// MinBaselineDays is the minimum number of distinct active days an
+	// engineer must have before we emit Z-score or rhythm-break signals for
+	// them. Below this floor the detector skips to avoid noisy alerts on new
+	// hires. Defaults to 14.
+	MinBaselineDays int `yaml:"min_baseline_days"`
+	// BurstWindowMinutes is the rolling window for burst detection
+	// (defaults to 30 min).
+	BurstWindowMinutes int `yaml:"burst_window_minutes"`
+	// BurstMultiplier is the multiple of an engineer's hourly p95 that
+	// triggers a `warn` burst (defaults to 2.0). `critical` fires at
+	// BurstMultiplier * 1.5.
+	BurstMultiplier float64 `yaml:"burst_multiplier"`
+	// ZScoreWarn / ZScoreCritical are the stddev cutoffs for spend_zscore_high
+	// (defaults 2.0 / 3.0).
+	ZScoreWarn     float64 `yaml:"zscore_warn"`
+	ZScoreCritical float64 `yaml:"zscore_critical"`
+	// RhythmBreakPct is the maximum hour-of-day-distribution fraction that
+	// counts as a rhythm break (defaults to 0.05 — i.e. <5% of historical
+	// activity in that hour).
+	RhythmBreakPct float64 `yaml:"rhythm_break_pct"`
+	// NotifyBurstCritical sends an immediate Slack DM to engineer + manager
+	// on burst-critical signals (defaults to true).
+	NotifyBurstCritical bool `yaml:"notify_burst_critical"`
+}
+
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -111,6 +154,36 @@ func (c *Config) Validate() error {
 	}
 	if c.GitHub.LookbackDays <= 0 {
 		c.GitHub.LookbackDays = 30
+	}
+	if c.Signals.BaselineRebuildIntervalSeconds <= 0 {
+		c.Signals.BaselineRebuildIntervalSeconds = 86400
+	}
+	if c.Signals.EfficiencyRollupIntervalSeconds <= 0 {
+		c.Signals.EfficiencyRollupIntervalSeconds = 86400
+	}
+	if c.Signals.BaselineWindowDays <= 0 {
+		c.Signals.BaselineWindowDays = 30
+	}
+	if c.Signals.HourlyBaselineWindowDays <= 0 {
+		c.Signals.HourlyBaselineWindowDays = 14
+	}
+	if c.Signals.MinBaselineDays <= 0 {
+		c.Signals.MinBaselineDays = 14
+	}
+	if c.Signals.BurstWindowMinutes <= 0 {
+		c.Signals.BurstWindowMinutes = 30
+	}
+	if c.Signals.BurstMultiplier <= 0 {
+		c.Signals.BurstMultiplier = 2.0
+	}
+	if c.Signals.ZScoreWarn <= 0 {
+		c.Signals.ZScoreWarn = 2.0
+	}
+	if c.Signals.ZScoreCritical <= 0 {
+		c.Signals.ZScoreCritical = 3.0
+	}
+	if c.Signals.RhythmBreakPct <= 0 {
+		c.Signals.RhythmBreakPct = 0.05
 	}
 	return nil
 }

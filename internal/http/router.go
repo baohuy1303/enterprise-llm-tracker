@@ -33,6 +33,7 @@ func NewRouter(
 	// mux as ingest because they share the request-logging middleware below.
 	admin := NewAdminHandlers(st, engineerSvc, nil)
 	engineers := NewEngineerHandlers(engineerSvc, nil)
+	signals := NewSignalHandlers(st, nil)
 
 	adminMux := http.NewServeMux()
 	// engineer CRUD
@@ -46,6 +47,11 @@ func NewRouter(
 	adminMux.HandleFunc("GET /admin/usage/recent", admin.RecentUsage)
 	adminMux.HandleFunc("POST /admin/refresh-efficiency", admin.RefreshEfficiency)
 	adminMux.HandleFunc("POST /admin/registry/refresh", admin.RefreshRegistry)
+	// signal analytics (read-only; writes happen in sentinel-workers)
+	adminMux.HandleFunc("GET /admin/signals/efficiency", signals.EfficiencyList)
+	adminMux.HandleFunc("GET /admin/signals/efficiency/{email}", signals.EfficiencyOne)
+	adminMux.HandleFunc("GET /admin/signals/events", signals.EventsList)
+	adminMux.HandleFunc("GET /admin/signals/events/{email}", signals.EventsForEngineer)
 
 	mux.Handle("/admin/", middleware.BearerAuth(adminToken, adminMux))
 

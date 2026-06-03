@@ -150,6 +150,59 @@ POST {{host}}/admin/registry/refresh
 Authorization: Bearer {{adminToken}}
 
 ### ---------------------------------------------------------------
+### Signal analytics
+### ---------------------------------------------------------------
+
+### Efficiency rollup — leaderboard table for one window
+###   window options: 1d | 7d | 30d | 180d
+GET {{host}}/admin/signals/efficiency?window=30d
+Authorization: Bearer {{adminToken}}
+
+### Efficiency rollup — 7-day window
+GET {{host}}/admin/signals/efficiency?window=7d
+Authorization: Bearer {{adminToken}}
+
+### Efficiency rollup — invalid window → expect 400
+GET {{host}}/admin/signals/efficiency?window=999d
+Authorization: Bearer {{adminToken}}
+
+### Efficiency rollup — one engineer detail
+GET {{host}}/admin/signals/efficiency/{{email}}?window=30d
+Authorization: Bearer {{adminToken}}
+
+### Efficiency rollup — unknown engineer → expect 404 ("no rollup yet")
+GET {{host}}/admin/signals/efficiency/nobody@example.com?window=30d
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — recent (default 7d, all types/severities)
+GET {{host}}/admin/signals/events
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — critical only
+GET {{host}}/admin/signals/events?severity=critical
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — burst only
+GET {{host}}/admin/signals/events?type=burst
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — with a since cutoff + custom limit
+GET {{host}}/admin/signals/events?since=2026-05-20T00:00:00Z&limit=50
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — invalid since → expect 400
+GET {{host}}/admin/signals/events?since=not-a-timestamp
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — scoped to one engineer
+GET {{host}}/admin/signals/events/{{email}}
+Authorization: Bearer {{adminToken}}
+
+### Detected signals — engineer + severity filter
+GET {{host}}/admin/signals/events/{{email}}?severity=critical&limit=20
+Authorization: Bearer {{adminToken}}
+
+### ---------------------------------------------------------------
 ### Auth failures
 ### ---------------------------------------------------------------
 

@@ -38,3 +38,19 @@ registry:
 
 admin:
   token_env: "ADMIN_TOKEN"     # env var holding the bearer token for /admin/* endpoints
+
+# Signal analytics: efficiency rollups + real-time pattern detection
+# (burst spend, daily-spend Z-score, rhythm break). Detector runs as a Kafka
+# consumer in sentinel-workers; rollups + baselines run as nightly cron jobs.
+signals:
+  baseline_rebuild_interval_seconds: 86400   # nightly rebuild of per-engineer baselines
+  efficiency_rollup_interval_seconds: 86400  # nightly aggregation into engineer_signals
+  baseline_window_days: 30                   # daily spend mean/stddev lookback
+  hourly_baseline_window_days: 14            # hourly p95 lookback for burst detection
+  min_baseline_days: 14                      # suppress detection for engineers with less history
+  burst_window_minutes: 30
+  burst_multiplier: 2.0                      # warn at 2x hourly p95, critical at 3x
+  zscore_warn: 2.0                           # daily spend > 2σ above mean = warn
+  zscore_critical: 3.0
+  rhythm_break_pct: 0.05                     # hour-of-day bucket holding <5% of activity = rhythm break
+  notify_burst_critical: true                # DM engineer + manager on burst-critical

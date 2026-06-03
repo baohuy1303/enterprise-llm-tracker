@@ -74,6 +74,14 @@ func main() {
 
 	thresholdSvc := service.NewThresholdService(st, reg, slackClient, cfg.Thresholds, slog.Default())
 	persistSvc := service.NewPersistService(st, slog.Default())
+	signalDetector := service.NewSignalDetector(st, reg, slackClient, cfg.Signals, slog.Default())
+
+	baselineRebuilder := service.NewBaselineRebuilder(st, reg, cfg.Signals, slog.Default())
+	efficiencyRollup := service.NewEfficiencyRollup(st, reg, cfg.Signals, slog.Default())
+	go baselineRebuilder.Run(rootCtx)
+	go efficiencyRollup.Run(rootCtx)
+	log.Printf("signal-analytics jobs started (baseline rebuild + efficiency rollup, interval=%ds)",
+		cfg.Signals.BaselineRebuildIntervalSeconds)
 
 	// GitHub efficiency collector — only enabled when a token + org are
 	// configured. Without those, the github-trigger consumer becomes a no-op.
@@ -105,6 +113,7 @@ func main() {
 		{prefix + ".threshold-checker", thresholdSvc.HandleEvent},
 		{prefix + ".postgres-writer", persistSvc.HandleEvent},
 		{prefix + ".github-trigger", githubTriggerHandler(st, reg, collector, slog.Default())},
+		{prefix + ".signal-detector", signalDetector.HandleEvent},
 	}
 
 	var wg sync.WaitGroup
