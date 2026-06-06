@@ -113,5 +113,5 @@ func writeProtoResponse(w http.ResponseWriter, msg proto.Message) {
 	}
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	_, _ = w.Write(data)
 }

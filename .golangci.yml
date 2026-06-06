@@ -21,6 +21,7 @@ linters-settings:
     enable-all: true
     disable:
       - fieldalignment   # struct padding — not worth the noise at this stage
+      - shadow           # flags idiomatic "if err := f(); err != nil" patterns
   goimports:
     local-prefixes: enterprise-llm-tracker
 

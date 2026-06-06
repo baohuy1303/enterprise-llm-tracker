@@ -52,14 +52,14 @@ var kinds = map[string]string{
 
 func main() {
 	var (
-		target   = flag.String("target", "http://localhost:4318/v1/metrics", "OTLP HTTP metrics endpoint (collector :4318/v1/metrics, or sentinel-api :8081/ingest/otel/v1/metrics)")
-		email    = flag.String("email", "", "engineer email (user.email attribute) — required")
-		kind     = flag.String("kind", "cost", "cost|token|lines|pr|commit|session")
-		value    = flag.Float64("value", 0.10, "data-point value (USD for cost, token count for token, ignored for counts)")
-		model    = flag.String("model", "claude-opus-4-7", "model attribute (cost/token only)")
-		ttype    = flag.String("ttype", "input", "token type: input|output|cacheRead|cacheCreation (kind=token only)")
-		count    = flag.Int("count", 1, "number of data points to emit in the request")
-		atHour   = flag.Int("at-hour", -1, "if >=0, stamp events at this UTC hour today (for rhythm-break tests); else now")
+		target = flag.String("target", "http://localhost:4318/v1/metrics", "OTLP HTTP metrics endpoint (collector :4318/v1/metrics, or sentinel-api :8081/ingest/otel/v1/metrics)")
+		email  = flag.String("email", "", "engineer email (user.email attribute) — required")
+		kind   = flag.String("kind", "cost", "cost|token|lines|pr|commit|session")
+		value  = flag.Float64("value", 0.10, "data-point value (USD for cost, token count for token, ignored for counts)")
+		model  = flag.String("model", "claude-opus-4-7", "model attribute (cost/token only)")
+		ttype  = flag.String("ttype", "input", "token type: input|output|cacheRead|cacheCreation (kind=token only)")
+		count  = flag.Int("count", 1, "number of data points to emit in the request")
+		atHour = flag.Int("at-hour", -1, "if >=0, stamp events at this UTC hour today (for rhythm-break tests); else now")
 	)
 	flag.Parse()
 

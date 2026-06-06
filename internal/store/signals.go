@@ -338,9 +338,11 @@ func (s *Store) BumpBurstWindow(ctx context.Context, email string, cost float64,
 func (s *Store) SumBurstWindow(ctx context.Context, email string, at time.Time, window time.Duration) (float64, error) {
 	key := burstKey(email)
 	cutoff := at.Add(-window).UnixNano()
-	members, err := s.rdb.ZRangeByScore(ctx, key, &redis.ZRangeBy{
-		Min: strconv.FormatInt(cutoff, 10),
-		Max: "+inf",
+	members, err := s.rdb.ZRangeArgs(ctx, redis.ZRangeArgs{
+		Key:     key,
+		Start:   strconv.FormatInt(cutoff, 10),
+		Stop:    "+inf",
+		ByScore: true,
 	}).Result()
 	if err != nil {
 		return 0, err

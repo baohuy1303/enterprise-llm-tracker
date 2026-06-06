@@ -3,17 +3,17 @@ package store
 import "time"
 
 type Event struct {
-	EventID             string    `json:"event_id"`
-	EngineerID          string    `json:"engineer_id"`
-	OccurredAt          time.Time `json:"occurred_at"`
-	Source              string    `json:"source"`
-	MetricName          string    `json:"metric_name"`
-	CostUSD             *float64  `json:"cost_usd,omitempty"`
-	TokensInput         *int      `json:"tokens_input,omitempty"`
-	TokensOutput        *int      `json:"tokens_output,omitempty"`
-	TokensCacheRead     *int      `json:"tokens_cache_read,omitempty"`
-	TokensCacheCreation *int      `json:"tokens_cache_creation,omitempty"`
-	Model               string    `json:"model,omitempty"`
+	EventID             string            `json:"event_id"`
+	EngineerID          string            `json:"engineer_id"`
+	OccurredAt          time.Time         `json:"occurred_at"`
+	Source              string            `json:"source"`
+	MetricName          string            `json:"metric_name"`
+	CostUSD             *float64          `json:"cost_usd,omitempty"`
+	TokensInput         *int              `json:"tokens_input,omitempty"`
+	TokensOutput        *int              `json:"tokens_output,omitempty"`
+	TokensCacheRead     *int              `json:"tokens_cache_read,omitempty"`
+	TokensCacheCreation *int              `json:"tokens_cache_creation,omitempty"`
+	Model               string            `json:"model,omitempty"`
 	Raw                 map[string]string `json:"raw,omitempty"`
 }
 
@@ -48,14 +48,14 @@ type EfficiencySnapshot struct {
 }
 
 type ThresholdTrigger struct {
-	EngineerID         string
-	Period             string  // "daily" or "monthly"
-	ThresholdPct       int     // 80, 100
-	TriggeredAt        time.Time
-	SpendAtTriggerUSD  float64
-	BudgetUSD          float64
-	SlackMessageTS     string  // empty if Slack not sent
-	NotifiedManager    bool
+	EngineerID        string
+	Period            string // "daily" or "monthly"
+	ThresholdPct      int    // 80, 100
+	TriggeredAt       time.Time
+	SpendAtTriggerUSD float64
+	BudgetUSD         float64
+	SlackMessageTS    string // empty if Slack not sent
+	NotifiedManager   bool
 }
 
 // EngineerSignal is one per-engineer × per-window efficiency rollup row.
@@ -87,17 +87,17 @@ type EngineerSignal struct {
 // SignalEvent is a single detected anomaly written by the signal-detector.
 // Used for the dashboard "what fired recently?" view.
 type SignalEvent struct {
-	ID             int64                  `json:"id"`
-	EngineerID     string                 `json:"engineer_id"`
-	SignalType     string                 `json:"signal_type"` // burst | spend_zscore_high | rhythm_break
-	Severity       string                 `json:"severity"`    // info | warn | critical
-	OccurredAt     time.Time              `json:"occurred_at"`
-	ObservedValue  *float64               `json:"observed_value,omitempty"`
-	BaselineValue  *float64               `json:"baseline_value,omitempty"`
-	ZScore         *float64               `json:"z_score,omitempty"`
-	Context        map[string]any         `json:"context,omitempty"`
-	Notified       bool                   `json:"notified"`
-	NotifiedAt     *time.Time             `json:"notified_at,omitempty"`
+	ID            int64          `json:"id"`
+	EngineerID    string         `json:"engineer_id"`
+	SignalType    string         `json:"signal_type"` // burst | spend_zscore_high | rhythm_break
+	Severity      string         `json:"severity"`    // info | warn | critical
+	OccurredAt    time.Time      `json:"occurred_at"`
+	ObservedValue *float64       `json:"observed_value,omitempty"`
+	BaselineValue *float64       `json:"baseline_value,omitempty"`
+	ZScore        *float64       `json:"z_score,omitempty"`
+	Context       map[string]any `json:"context,omitempty"`
+	Notified      bool           `json:"notified"`
+	NotifiedAt    *time.Time     `json:"notified_at,omitempty"`
 }
 
 // EngineerBaseline is the cached per-engineer baseline used by the detector.

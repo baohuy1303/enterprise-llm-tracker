@@ -20,7 +20,7 @@ func (rw *responseWriter) WriteHeader(status int) {
 
 func requestID() string {
 	b := make([]byte, 8)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }
 

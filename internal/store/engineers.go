@@ -359,4 +359,3 @@ func (s *Store) ListRecentEvents(ctx context.Context, limit int) ([]RecentEvent,
 	}
 	return out, rows.Err()
 }
-
