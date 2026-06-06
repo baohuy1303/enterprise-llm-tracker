@@ -1,0 +1,17 @@
+# Stage 1: build
+FROM golang:1.26-alpine AS builder
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /sentinel-workers ./cmd/sentinel-workers
+
+# Stage 2: minimal runtime
+FROM gcr.io/distroless/static-debian12
+WORKDIR /app
+
+COPY --from=builder /sentinel-workers /app/sentinel-workers
+
+ENTRYPOINT ["/app/sentinel-workers"]

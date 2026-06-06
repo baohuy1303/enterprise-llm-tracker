@@ -1,0 +1,37 @@
+run:
+  timeout: 5m
+  go: "1.26"
+
+linters:
+  enable:
+    - errcheck       # check ignored errors
+    - gosimple       # simplification suggestions
+    - govet          # vet checks (shadow, printf, etc.)
+    - ineffassign    # assignments to variables never used after assignment
+    - staticcheck    # staticcheck suite
+    - unused         # unused code
+    - gofmt          # formatting
+    - goimports      # import ordering
+    - misspell       # common english misspellings in comments/strings
+    - unconvert      # remove unnecessary type conversions
+    - bodyclose      # http response body not closed
+    - noctx          # http requests without context
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment   # struct padding — not worth the noise at this stage
+  goimports:
+    local-prefixes: enterprise-llm-tracker
+
+issues:
+  exclude-rules:
+    # Test files: relax errcheck and unused (test helpers, etc.)
+    - path: "_test\\.go"
+      linters:
+        - errcheck
+    # cmd/ entrypoints call log.Fatal which triggers errcheck on deferred closes
+    - path: "cmd/"
+      linters:
+        - errcheck
