@@ -27,11 +27,11 @@ const fileOverlapWindow = 14 * 24 * time.Hour
 // RevertFinding pairs the original PR (to be marked reverted) with the PR
 // that revealed the revert and a timestamp for when the revert merged.
 type RevertFinding struct {
-	OriginalRepo   string
-	OriginalPR     int
-	RevertedAt     time.Time
-	RevertingPR    int
-	Heuristic      string // "title" | "file_overlap"
+	OriginalRepo string
+	OriginalPR   int
+	RevertedAt   time.Time
+	RevertingPR  int
+	Heuristic    string // "title" | "file_overlap"
 }
 
 // DetectReverts scans `prs` (a recent window for one repo) and returns the
@@ -188,4 +188,3 @@ func jaccard(a, b map[string]struct{}) float64 {
 	}
 	return float64(inter) / float64(union)
 }
-

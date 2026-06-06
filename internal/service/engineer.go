@@ -48,9 +48,9 @@ type EngineerWithUsage struct {
 // recent threshold triggers + latest efficiency snapshot.
 type EngineerDetail struct {
 	EngineerWithUsage
-	UsageHistory     []store.DailyUsage         `json:"usage_history"`
-	RecentTriggers   []store.ThresholdTrigger   `json:"recent_triggers"`
-	EfficiencySnap   *store.EfficiencySnapshot  `json:"efficiency_snapshot,omitempty"`
+	UsageHistory   []store.DailyUsage        `json:"usage_history"`
+	RecentTriggers []store.ThresholdTrigger  `json:"recent_triggers"`
+	EfficiencySnap *store.EfficiencySnapshot `json:"efficiency_snapshot,omitempty"`
 }
 
 // Create validates inputs and inserts a new engineer, then forces a registry
@@ -229,4 +229,3 @@ func IsValidation(err error) bool {
 	var v ErrValidation
 	return errors.As(err, &v)
 }
-

@@ -46,9 +46,9 @@ type EfficiencyCollector struct {
 
 	triggerCh chan struct{}
 
-	runMu      sync.Mutex
-	lastRunAt  time.Time
-	lastRunMu  sync.Mutex
+	runMu     sync.Mutex
+	lastRunAt time.Time
+	lastRunMu sync.Mutex
 }
 
 func NewEfficiencyCollector(

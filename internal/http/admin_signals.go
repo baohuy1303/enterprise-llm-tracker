@@ -45,10 +45,10 @@ func (h *SignalHandlers) EfficiencyList(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"window":  window,
+		"window":     window,
 		"window_end": end.Format("2006-01-02"),
-		"rows":    rows,
-		"count":   len(rows),
+		"rows":       rows,
+		"count":      len(rows),
 	})
 }
 
@@ -83,11 +83,12 @@ func (h *SignalHandlers) EfficiencyOne(w http.ResponseWriter, r *http.Request) {
 }
 
 // EventsList handles GET /admin/signals/events with optional filters:
-//   ?engineer=alice@example.com   — filter to one engineer
-//   ?type=burst                   — burst | spend_zscore_high | rhythm_break
-//   ?severity=critical            — info | warn | critical
-//   ?since=2026-05-20T00:00:00Z   — RFC3339 timestamp; defaults to 7 days ago
-//   ?limit=100                    — capped at 1000
+//
+//	?engineer=alice@example.com   — filter to one engineer
+//	?type=burst                   — burst | spend_zscore_high | rhythm_break
+//	?severity=critical            — info | warn | critical
+//	?since=2026-05-20T00:00:00Z   — RFC3339 timestamp; defaults to 7 days ago
+//	?limit=100                    — capped at 1000
 func (h *SignalHandlers) EventsList(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := store.SignalEventFilter{

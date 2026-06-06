@@ -48,11 +48,11 @@ type prSearchQuery struct {
 		}
 		Nodes []struct {
 			PullRequest struct {
-				Number    int
-				Title     string
-				State     githubv4.PullRequestState
-				CreatedAt time.Time
-				MergedAt  *time.Time
+				Number     int
+				Title      string
+				State      githubv4.PullRequestState
+				CreatedAt  time.Time
+				MergedAt   *time.Time
 				Repository struct {
 					NameWithOwner string
 				}
