@@ -26,6 +26,10 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          # Build golangci-lint from source with the runner's Go 1.26 toolchain.
+          # The prebuilt binary is compiled with an older Go and its type-checker
+          # rejects 1.26 stdlib/deps ("package requires newer Go version").
+          install-mode: goinstall
           args: --timeout=5m
 
   # ── 2. Test ──────────────────────────────────────────────────────────────────

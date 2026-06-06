@@ -1,8 +1,8 @@
 run:
   timeout: 5m
-  # golangci-lint is built with an older Go toolchain; pin to 1.24 so it
-  # doesn't reject go.mod's 1.26 directive. Lint semantics are unchanged.
-  go: "1.24"
+  # Go version is read from go.mod (1.26). CI builds golangci-lint from source
+  # with the runner's matching toolchain (install-mode: goinstall) so its
+  # type-checker understands 1.26 — a prebuilt binary lags and rejects it.
 
 linters:
   enable:
