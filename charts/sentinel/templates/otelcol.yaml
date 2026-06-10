@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-otelcol-config
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:{{ .Values.otelcol.grpcPort }}
+          http:
+            endpoint: 0.0.0.0:{{ .Values.otelcol.httpPort }}
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+      # Keep only claude_code.* metrics — drop everything else.
+      filter/sentinel:
+        error_mode: ignore
+        metrics:
+          metric:
+            - 'not IsMatch(name, "^claude_code\\.")'
+
+    exporters:
+      # Collector stdout — `kubectl logs` on this pod shows metrics landing.
+      debug:
+        verbosity: normal
+      # Re-exposes the received claude_code.* metrics in Prometheus format on
+      # :{{ .Values.otelcol.promPort }} so Prometheus/Grafana can query product metrics.
+      prometheus:
+        endpoint: 0.0.0.0:{{ .Values.otelcol.promPort }}
+      # Forwards to the Go ingest handler. The otlphttp exporter appends
+      # /v1/metrics and /v1/logs to this base endpoint automatically.
+      otlphttp/sentinel:
+        endpoint: "http://{{ include "sentinel.fullname" . }}-api:{{ .Values.api.port }}/ingest/otel"
+        tls:
+          insecure: true
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_elapsed_time: 60s
+
+    service:
+      telemetry:
+        logs:
+          level: info
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [filter/sentinel, batch]
+          exporters: [debug, prometheus, otlphttp/sentinel]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [debug, otlphttp/sentinel]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinel.fullname" . }}-otelcol
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "sentinel.fullname" . }}-otelcol
+  template:
+    metadata:
+      labels:
+        app: {{ include "sentinel.fullname" . }}-otelcol
+      annotations:
+        # Roll the collector pod when its config changes.
+        checksum/config: {{ .Values.otelcol | toYaml | sha256sum }}
+    spec:
+      containers:
+        - name: otelcol
+          image: {{ .Values.otelcol.image }}
+          args: ["--config=/etc/otelcol/collector-config.yaml"]
+          ports:
+            - name: otlp-grpc
+              containerPort: {{ .Values.otelcol.grpcPort }}
+            - name: otlp-http
+              containerPort: {{ .Values.otelcol.httpPort }}
+            - name: prometheus
+              containerPort: {{ .Values.otelcol.promPort }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.otelcol.grpcPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.otelcol.grpcPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.otelcol.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-otelcol-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sentinel.fullname" . }}-otelcol
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.otelcol.serviceType }}
+  selector:
+    app: {{ include "sentinel.fullname" . }}-otelcol
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.otelcol.grpcPort }}
+      targetPort: {{ .Values.otelcol.grpcPort }}
+    - name: otlp-http
+      port: {{ .Values.otelcol.httpPort }}
+      targetPort: {{ .Values.otelcol.httpPort }}
+    - name: prometheus
+      port: {{ .Values.otelcol.promPort }}
+      targetPort: {{ .Values.otelcol.promPort }}

@@ -1,0 +1,39 @@
+Sentinel {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}".
+
+1. Watch everything come up (Postgres + Kafka take longest):
+
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }} -w
+
+2. Verify the HPA is reading CPU metrics (needs `minikube addons enable metrics-server`):
+
+   kubectl get hpa {{ include "sentinel.fullname" . }}-api
+
+3. Reach the admin API:
+
+   kubectl port-forward svc/{{ include "sentinel.fullname" . }}-api {{ .Values.api.port }}:{{ .Values.api.port }}
+   curl localhost:{{ .Values.api.port }}/healthz
+
+{{- if .Values.grafana.enabled }}
+
+4. Open Grafana ({{ .Values.grafana.adminUser }} / {{ .Values.grafana.adminPassword }}):
+
+   kubectl port-forward svc/{{ include "sentinel.fullname" . }}-grafana {{ .Values.grafana.port }}:{{ .Values.grafana.port }}
+   # http://localhost:{{ .Values.grafana.port }} → dashboard "Sentinel — Pipeline Health"
+{{- end }}
+
+5. Point Claude Code at the collector. With `minikube tunnel` running in another
+   terminal, the otelcol LoadBalancer gets an external IP:
+
+   kubectl get svc {{ include "sentinel.fullname" . }}-otelcol
+   export CLAUDE_CODE_ENABLE_TELEMETRY=1
+   export OTEL_EXPORTER_OTLP_ENDPOINT=http://<EXTERNAL-IP>:{{ .Values.otelcol.grpcPort }}
+
+   Then watch events land:
+
+   kubectl logs -l app={{ include "sentinel.fullname" . }}-api -f
+
+{{- if not .Values.secrets.adminToken }}
+
+WARNING: secrets.adminToken is empty — /admin/* endpoints will reject requests.
+Re-run with: helm upgrade {{ .Release.Name }} ./charts/sentinel --set secrets.adminToken=...
+{{- end }}

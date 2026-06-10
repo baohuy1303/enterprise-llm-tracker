@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinel.fullname" . }}-workers
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  # Pinned to 1 — the in-process cron goroutines are not leader-elected.
+  replicas: {{ .Values.workers.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "sentinel.fullname" . }}-workers
+  template:
+    metadata:
+      labels:
+        app: {{ include "sentinel.fullname" . }}-workers
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    spec:
+      initContainers:
+        {{- include "sentinel.waitForDeps" . | nindent 8 }}
+      containers:
+        - name: sentinel-workers
+          image: "{{ .Values.workers.image.repository }}:{{ .Values.workers.image.tag }}"
+          imagePullPolicy: {{ .Values.workers.image.pullPolicy }}
+          ports:
+            - name: health
+              containerPort: {{ .Values.workers.healthPort }}
+          env:
+            - name: SENTINEL_CONFIG
+              value: /etc/sentinel/sentinel.yaml
+            - name: WORKERS_HEALTH_ADDR
+              value: ":{{ .Values.workers.healthPort }}"
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sentinel.fullname" . }}-secrets
+                  key: SLACK_BOT_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sentinel.fullname" . }}-secrets
+                  key: GITHUB_TOKEN
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sentinel
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.workers.healthPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.workers.healthPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.workers.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-config

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sentinel
+description: >-
+  Sentinel — AI usage management platform. Ingests Claude Code OpenTelemetry,
+  attributes per-engineer spend, fires Slack threshold alerts, and joins spend
+  against GitHub output for a cost-efficiency view. Bundles the full stack:
+  sentinel-api, sentinel-workers, OTel Collector, Postgres, Redis, Kafka
+  (KRaft), Prometheus, and Grafana.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,87 @@
+{{- if .Values.kafka.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinel.fullname" . }}-kafka
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "sentinel.fullname" . }}-kafka
+  template:
+    metadata:
+      labels:
+        app: {{ include "sentinel.fullname" . }}-kafka
+    spec:
+      containers:
+        - name: kafka
+          image: {{ .Values.kafka.image }}
+          ports:
+            - containerPort: {{ .Values.kafka.port }}
+            - containerPort: {{ .Values.kafka.controllerPort }}
+          env:
+            - name: KAFKA_NODE_ID
+              value: "1"
+            - name: KAFKA_PROCESS_ROLES
+              value: "broker,controller"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:{{ .Values.kafka.port }},CONTROLLER://0.0.0.0:{{ .Values.kafka.controllerPort }}"
+            # The address clients are told to RECONNECT to after bootstrap. In
+            # cluster this must be the Service DNS name, not localhost — every
+            # consumer/producer pod resolves it cluster-wide to this broker.
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://{{ include "sentinel.fullname" . }}-kafka:{{ .Values.kafka.port }}"
+            # Controller quorum stays localhost: broker and controller are the
+            # same process in this pod. Using the Service DNS here would deadlock
+            # startup — a ClusterIP only routes to *ready* pods, but the pod
+            # can't become ready until it reaches its own controller.
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: "1@localhost:{{ .Values.kafka.controllerPort }}"
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: "CONTROLLER"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "false"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            - name: CLUSTER_ID
+              value: {{ .Values.kafka.clusterId | quote }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.kafka.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.kafka.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.kafka.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sentinel.fullname" . }}-kafka
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "sentinel.fullname" . }}-kafka
+  ports:
+    - name: client
+      port: {{ .Values.kafka.port }}
+      targetPort: {{ .Values.kafka.port }}
+    - name: controller
+      port: {{ .Values.kafka.controllerPort }}
+      targetPort: {{ .Values.kafka.controllerPort }}
+{{- end }}

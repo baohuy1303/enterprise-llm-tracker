@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-config
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  sentinel.yaml: |
+    listen: ":{{ .Values.api.port }}"
+
+    postgres:
+      url: "postgres://{{ .Values.postgres.user }}:{{ .Values.secrets.postgresPassword }}@{{ include "sentinel.fullname" . }}-postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.db }}?sslmode=disable"
+
+    redis:
+      addr: "{{ include "sentinel.fullname" . }}-redis:{{ .Values.redis.port }}"
+
+    kafka:
+      brokers: ["{{ include "sentinel.fullname" . }}-kafka:{{ .Values.kafka.port }}"]
+      topic: "{{ .Values.kafka.topic }}"
+      consumer_group_prefix: "sentinel"
+
+    github:
+      org: {{ .Values.config.github.org | quote }}
+      is_user: {{ .Values.config.github.isUser }}
+      repos: {{ toJson .Values.config.github.repos }}
+      token_env: "GITHUB_TOKEN"
+      lookback_days: {{ .Values.config.github.lookbackDays }}
+      scheduler:
+        interval_seconds: {{ .Values.config.github.scheduler.intervalSeconds }}
+        min_trigger_interval_seconds: {{ .Values.config.github.scheduler.minTriggerIntervalSeconds }}
+
+    slack:
+      # Only name the env var when a token is actually provided: config
+      # validation fails fatally if bot_token_env points at an unset/empty var.
+      # Blank lets a no-Slack install boot — workers log instead of DMing.
+      bot_token_env: {{ if .Values.secrets.slackBotToken }}"SLACK_BOT_TOKEN"{{ else }}""{{ end }}
+      default_manager_channel: {{ .Values.config.slack.defaultManagerChannel | quote }}
+
+    thresholds:
+      notify_at_percent: {{ toJson .Values.config.thresholds.notifyAtPercent }}
+      notify_manager_at_percent: {{ toJson .Values.config.thresholds.notifyManagerAtPercent }}
+
+    registry:
+      refresh_interval_seconds: {{ .Values.config.registry.refreshIntervalSeconds }}
+
+    admin:
+      token_env: "ADMIN_TOKEN"
+
+    signals:
+      baseline_rebuild_interval_seconds: {{ .Values.config.signals.baselineRebuildIntervalSeconds }}
+      efficiency_rollup_interval_seconds: {{ .Values.config.signals.efficiencyRollupIntervalSeconds }}
+      baseline_window_days: {{ .Values.config.signals.baselineWindowDays }}
+      hourly_baseline_window_days: {{ .Values.config.signals.hourlyBaselineWindowDays }}
+      min_baseline_days: {{ .Values.config.signals.minBaselineDays }}
+      burst_window_minutes: {{ .Values.config.signals.burstWindowMinutes }}
+      burst_multiplier: {{ .Values.config.signals.burstMultiplier }}
+      zscore_warn: {{ .Values.config.signals.zscoreWarn }}
+      zscore_critical: {{ .Values.config.signals.zscoreCritical }}
+      rhythm_break_pct: {{ .Values.config.signals.rhythmBreakPct }}
+      notify_burst_critical: {{ .Values.config.signals.notifyBurstCritical }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "sentinel.fullname" . }}-secrets
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+type: Opaque
+# Keys are the literal env-var names the binaries read (config references them
+# by name via *_token_env / bot_token_env). stringData is auto-base64-encoded.
+stringData:
+  ADMIN_TOKEN: {{ .Values.secrets.adminToken | quote }}
+  SLACK_BOT_TOKEN: {{ .Values.secrets.slackBotToken | quote }}
+  GITHUB_TOKEN: {{ .Values.secrets.githubToken | quote }}
+  POSTGRES_PASSWORD: {{ .Values.secrets.postgresPassword | quote }}

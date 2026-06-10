@@ -1,0 +1,176 @@
+{{- if .Values.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-grafana-datasource
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: sentinel-prom
+        access: proxy
+        url: http://{{ include "sentinel.fullname" . }}-prometheus:{{ .Values.prometheus.port }}
+        isDefault: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-grafana-dashboards-provider
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: sentinel
+        orgId: 1
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-grafana-dashboard
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  sentinel.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Targets Up",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "sentinel-prom" },
+          "targets": [
+            { "refId": "A", "expr": "up", "datasource": { "type": "prometheus", "uid": "sentinel-prom" } }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "sentinel-api goroutines",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "datasource": { "type": "prometheus", "uid": "sentinel-prom" },
+          "targets": [
+            { "refId": "A", "expr": "go_goroutines{job=\"sentinel-api\"}", "datasource": { "type": "prometheus", "uid": "sentinel-prom" } }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "sentinel-api resident memory (bytes)",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "sentinel-prom" },
+          "targets": [
+            { "refId": "A", "expr": "process_resident_memory_bytes{job=\"sentinel-api\"}", "datasource": { "type": "prometheus", "uid": "sentinel-prom" } }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Scrape duration (seconds)",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "datasource": { "type": "prometheus", "uid": "sentinel-prom" },
+          "targets": [
+            { "refId": "A", "expr": "scrape_duration_seconds", "datasource": { "type": "prometheus", "uid": "sentinel-prom" } }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["sentinel"],
+      "templating": { "list": [] },
+      "time": { "from": "now-30m", "to": "now" },
+      "title": "Sentinel — Pipeline Health",
+      "uid": "sentinel-health",
+      "version": 1
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinel.fullname" . }}-grafana
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "sentinel.fullname" . }}-grafana
+  template:
+    metadata:
+      labels:
+        app: {{ include "sentinel.fullname" . }}-grafana
+      annotations:
+        checksum/config: {{ .Values.grafana | toYaml | sha256sum }}
+    spec:
+      containers:
+        - name: grafana
+          image: {{ .Values.grafana.image }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.grafana.port }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.grafana.adminUser | quote }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.grafana.adminPassword | quote }}
+          volumeMounts:
+            - name: datasource
+              mountPath: /etc/grafana/provisioning/datasources
+              readOnly: true
+            - name: dashboards-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+              readOnly: true
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.grafana.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.grafana.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.grafana.resources | nindent 12 }}
+      volumes:
+        - name: datasource
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-grafana-datasource
+        - name: dashboards-provider
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-grafana-dashboards-provider
+        - name: dashboards
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-grafana-dashboard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sentinel.fullname" . }}-grafana
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "sentinel.fullname" . }}-grafana
+  ports:
+    - name: http
+      port: {{ .Values.grafana.port }}
+      targetPort: {{ .Values.grafana.port }}
+{{- end }}

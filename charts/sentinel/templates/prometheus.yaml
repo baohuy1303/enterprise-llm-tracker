@@ -1,0 +1,94 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinel.fullname" . }}-prometheus-config
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      # sentinel-api /metrics — Go runtime + promhttp metrics (the custom
+      # sentinel_* metrics from the plan's Stage 9 are not yet instrumented).
+      - job_name: sentinel-api
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["{{ include "sentinel.fullname" . }}-api:{{ .Values.api.port }}"]
+      # OTel Collector Prometheus exporter — the claude_code.* product metrics.
+      - job_name: otelcol
+        static_configs:
+          - targets: ["{{ include "sentinel.fullname" . }}-otelcol:{{ .Values.otelcol.promPort }}"]
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:{{ .Values.prometheus.port }}"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinel.fullname" . }}-prometheus
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "sentinel.fullname" . }}-prometheus
+  template:
+    metadata:
+      labels:
+        app: {{ include "sentinel.fullname" . }}-prometheus
+      annotations:
+        checksum/config: {{ .Values.prometheus | toYaml | sha256sum }}
+    spec:
+      containers:
+        - name: prometheus
+          image: {{ .Values.prometheus.image }}
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+          ports:
+            - name: http
+              containerPort: {{ .Values.prometheus.port }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+              readOnly: true
+            - name: storage
+              mountPath: /prometheus
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: {{ .Values.prometheus.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: {{ .Values.prometheus.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.prometheus.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "sentinel.fullname" . }}-prometheus-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sentinel.fullname" . }}-prometheus
+  labels:
+    {{- include "sentinel.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "sentinel.fullname" . }}-prometheus
+  ports:
+    - name: http
+      port: {{ .Values.prometheus.port }}
+      targetPort: {{ .Values.prometheus.port }}
+{{- end }}

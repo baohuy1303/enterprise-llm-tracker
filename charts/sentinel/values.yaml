@@ -1,0 +1,166 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sentinel Helm values
+#
+# Every tuneable knob lives here. The infra services (postgres, redis, kafka,
+# prometheus, grafana) each have an `enabled` flag so you can point at managed
+# equivalents instead — e.g. set postgres.enabled=false and override the DSN.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Override the chart name / fullname prefix. Leave blank in normal use; the
+# release name becomes the prefix for every resource and in-cluster DNS name.
+nameOverride: ""
+fullnameOverride: ""
+
+# Image used by the dependency-wait initContainer (needs `nc`).
+busybox:
+  image: busybox:1.36
+
+# ── Application secrets ──────────────────────────────────────────────────────
+# Override at install time, never commit real values:
+#   helm install sentinel ./charts/sentinel \
+#     --set secrets.adminToken=... \
+#     --set secrets.slackBotToken=... \
+#     --set secrets.githubToken=...
+#
+# NOTE: postgresPassword is also interpolated into the Postgres DSN inside the
+# rendered sentinel.yaml ConfigMap, because the Go config loader reads the DSN
+# literally and does not expand env vars. For this single-org demo deployment
+# that is acceptable (it matches the plaintext password already in
+# docker-compose.yml). In a hardened deployment you would render sentinel.yaml
+# into a Secret instead, or add env-var expansion to internal/config.
+secrets:
+  adminToken: ""
+  slackBotToken: ""
+  githubToken: ""
+  postgresPassword: "sentinel"
+
+# ── sentinel-api ─────────────────────────────────────────────────────────────
+api:
+  image:
+    repository: ghcr.io/baohuy1303/sentinel-api
+    tag: latest
+    # IfNotPresent lets locally-built minikube images win without a registry pull.
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8081
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# ── sentinel-workers ─────────────────────────────────────────────────────────
+workers:
+  image:
+    repository: ghcr.io/baohuy1303/sentinel-workers
+    tag: latest
+    pullPolicy: IfNotPresent
+  # MUST stay 1. The Kafka consumer groups would parallelize fine across
+  # replicas, but the in-process cron goroutines (baseline rebuild, efficiency
+  # rollup, GitHub collector) are not leader-elected and would double-fire.
+  replicas: 1
+  healthPort: 8082
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+# ── Postgres (source of truth) ───────────────────────────────────────────────
+postgres:
+  enabled: true
+  image: postgres:16
+  user: sentinel
+  db: sentinel
+  port: 5432
+  storage: 5Gi
+  resources:
+    requests: { cpu: 250m, memory: 256Mi }
+    limits: { cpu: 1000m, memory: 512Mi }
+
+# ── Redis (derived hot cache — no persistence, rebuilt from Postgres) ─────────
+redis:
+  enabled: true
+  image: redis:7-alpine
+  port: 6379
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+# ── Kafka (KRaft, single broker) ─────────────────────────────────────────────
+kafka:
+  enabled: true
+  image: apache/kafka:latest
+  port: 9092
+  controllerPort: 9093
+  clusterId: sentinel-kraft-cluster
+  topic: claude.usage.events
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { cpu: 1000m, memory: 1024Mi }
+
+# ── OTel Collector (the only externally-reachable component) ─────────────────
+otelcol:
+  image: otel/opentelemetry-collector-contrib:latest
+  grpcPort: 4317
+  httpPort: 4318
+  promPort: 8889
+  # LoadBalancer so `minikube tunnel` exposes :4317 to local Claude Code.
+  # Switch to NodePort if you prefer `minikube service`.
+  serviceType: LoadBalancer
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+# ── Prometheus ───────────────────────────────────────────────────────────────
+prometheus:
+  enabled: true
+  image: prom/prometheus:latest
+  port: 9090
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+# ── Grafana ──────────────────────────────────────────────────────────────────
+grafana:
+  enabled: true
+  image: grafana/grafana:latest
+  port: 3000
+  adminUser: admin
+  adminPassword: admin
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+# ── Application-level config rendered into sentinel.yaml ─────────────────────
+# Infra addresses (postgres/redis/kafka) are derived from the release name and
+# injected automatically — they are NOT listed here.
+config:
+  registry:
+    refreshIntervalSeconds: 30
+  thresholds:
+    notifyAtPercent: [80, 100]
+    notifyManagerAtPercent: [100]
+  github:
+    org: ""
+    isUser: false
+    repos: []
+    lookbackDays: 30
+    scheduler:
+      intervalSeconds: 3600
+      minTriggerIntervalSeconds: 300
+  slack:
+    defaultManagerChannel: "#eng-leadership"
+  signals:
+    baselineRebuildIntervalSeconds: 86400
+    efficiencyRollupIntervalSeconds: 86400
+    baselineWindowDays: 30
+    hourlyBaselineWindowDays: 14
+    minBaselineDays: 14
+    burstWindowMinutes: 30
+    burstMultiplier: 2.0
+    zscoreWarn: 2.0
+    zscoreCritical: 3.0
+    rhythmBreakPct: 0.05
+    notifyBurstCritical: true

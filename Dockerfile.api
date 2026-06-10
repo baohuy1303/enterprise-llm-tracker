@@ -2,10 +2,16 @@
 FROM golang:1.26-alpine AS builder
 WORKDIR /build
 
+# Copy dependecies so that we can leverage docker cache
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Copy rest of the files
+# (this won't trigger redownload of dependecies)
 COPY . .
+
+# Build the binary and remove all the extra debugging symbols
+# Leaving only the essential data
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /sentinel-api ./cmd/sentinel-api
 
 # Stage 2: minimal runtime — no shell, no package manager

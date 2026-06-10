@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -58,6 +59,40 @@ func main() {
 	}
 
 	st := store.New(pgPool, rdb)
+
+	// Minimal health server so Kubernetes can liveness/readiness probe the
+	// workers process — it otherwise has no HTTP surface. Liveness = process is
+	// up; readiness = Postgres + Redis reachable.
+	healthAddr := ":8082"
+	if v := os.Getenv("WORKERS_HEALTH_ADDR"); v != "" {
+		healthAddr = v
+	}
+	healthMux := http.NewServeMux()
+	healthMux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+	healthMux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if err := st.PingPG(ctx); err != nil {
+			http.Error(w, "postgres: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		if err := st.PingRedis(ctx); err != nil {
+			http.Error(w, "redis: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ready"))
+	})
+	healthSrv := &http.Server{Addr: healthAddr, Handler: healthMux}
+	go func() {
+		log.Printf("workers health server listening on %s", healthAddr)
+		if err := healthSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("health server error: %v", err)
+		}
+	}()
 
 	reg := registry.New(pgPool, time.Duration(cfg.Registry.RefreshIntervalSeconds)*time.Second)
 	if err := reg.Load(rootCtx); err != nil {
@@ -117,6 +152,7 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	// Reader and consumer will be instantiated in the same thread
 	closers := make([]*appkafka.Consumer, 0, len(consumers))
 	for _, c := range consumers {
 		consumer := appkafka.NewConsumer(cfg.Kafka.Brokers, cfg.Kafka.Topic, c.groupID, slog.Default())
@@ -137,6 +173,9 @@ func main() {
 	<-quit
 
 	log.Println("shutting down...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	_ = healthSrv.Shutdown(shutdownCtx)
 	rootCancel()
 	for _, c := range closers {
 		_ = c.Close()
