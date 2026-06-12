@@ -131,7 +131,7 @@ grafana:
   adminPassword: admin
   resources:
     requests: { cpu: 100m, memory: 128Mi }
-    limits: { cpu: 500m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
 
 # ── Application-level config rendered into sentinel.yaml ─────────────────────
 # Infra addresses (postgres/redis/kafka) are derived from the release name and
