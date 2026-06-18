@@ -34,17 +34,9 @@ type RevertFinding struct {
 	Heuristic    string // "title" | "file_overlap"
 }
 
-// DetectReverts scans `prs` (a recent window for one repo) and returns the
-// originals that should be marked reverted. Two heuristics:
-//
-//   - Title-based: PR title starts with "Revert " → look for the most recent
-//     prior merged PR whose title is mentioned in the revert title.
-//   - File-overlap: each merged PR is compared against PRs merged in the
-//     preceding 14 days; if Jaccard(files) ≥ 0.6 AND the newer PR has fewer
-//     than half the original's files changed (suggesting an undo, not an
-//     extension), the original is flagged reverted.
-//
-// The two heuristics may overlap. We dedupe by (repo, original_pr).
+// DetectReverts scans `prs` (a recent window for one repo) for two revert
+// signatures — title match ("Revert ...") and file-overlap (see
+// detectFromTitle / detectFromFileOverlap) — deduped by (repo, original_pr).
 func DetectReverts(prs []store.GitHubPR) []RevertFinding {
 	seen := map[string]RevertFinding{}
 	key := func(r string, n int) string { return r + "#" + strconv.Itoa(n) }

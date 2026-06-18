@@ -488,10 +488,7 @@ func (s *Store) EngineerUsageAggregate(ctx context.Context, email string, start,
 		return agg, err
 	}
 
-	// lines-of-code is its own metric_name; sum the value out of `raw` if
-	// present, otherwise treat as zero. OTel emits the raw value as the
-	// metric value, which we don't persist on a dedicated column — we read
-	// the `raw` JSONB for the `value` key if present.
+	// lines-of-code is its own metric_name, not a dedicated column — count rows.
 	var lines int64
 	err = s.pg.QueryRow(ctx, `
 		SELECT COALESCE(COUNT(*), 0)::bigint
@@ -528,12 +525,8 @@ func (s *Store) EngineerUsageAggregate(ctx context.Context, email string, start,
 	return agg, rows.Err()
 }
 
-// PRCountsForEngineer returns the four PR counts for one engineer in a window,
-// keyed by github_username. Counts use:
-//   - opened: created_at in window
-//   - merged: merged_at in window
-//   - closed_unmerged: state='CLOSED' AND merged_at IS NULL AND created_at in window
-//   - reverted: reverted=TRUE AND reverted_at in window (or merged_at if no revert ts)
+// EngineerPRCounts is opened/merged/closed-unmerged/reverted PR counts for
+// one engineer in a window — see PRCountsForEngineer for the exact filters.
 type EngineerPRCounts struct {
 	Opened         int
 	Merged         int

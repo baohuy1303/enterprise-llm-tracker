@@ -1,26 +1,7 @@
-// Command loadgen emits real OTLP metrics over HTTP, exactly like the
-// Claude Code → otelcol → sentinel-api production path. It builds an
-// ExportMetricsServiceRequest protobuf (using the same otlp proto libs the
-// ingest handler decodes with — zero extra dependencies) and POSTs it.
-//
-// Default target is the otelcol HTTP receiver (:4318/v1/metrics), so traffic
-// flows through the real collector hop (filter + batch) before reaching the
-// ingest handler. Point --target at http://localhost:8081/ingest/otel/v1/metrics
-// to bypass the collector and hit sentinel-api directly (faster, deterministic).
-//
-// Examples:
-//
-//	# one $5 cost event for the user (crosses a $2 daily budget → threshold DM)
-//	go run ./cmd/loadgen --email huynhbaohuy1303@gmail.com --kind cost --value 5
-//
-//	# a burst: 5 pricey cost events "now" for a seeded engineer (→ burst-critical DM)
-//	go run ./cmd/loadgen --email test-alice@sentinel.local --kind cost --value 0.8 --count 5
-//
-//	# a cold-hour event (03:00 UTC today) → rhythm break
-//	go run ./cmd/loadgen --email test-alice@sentinel.local --kind cost --value 0.2 --at-hour 3
-//
-//	# a PR-count event → wakes the github-trigger consumer / collector
-//	go run ./cmd/loadgen --email huynhbaohuy1303@gmail.com --kind pr
+// Command loadgen POSTs a single OTLP metrics request, exactly like the
+// Claude Code -> otelcol -> sentinel-api path. Defaults to the otelcol
+// receiver; point --target at sentinel-api directly to bypass the collector.
+// Run with -h for flags.
 package main
 
 import (

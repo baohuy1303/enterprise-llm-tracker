@@ -11,12 +11,9 @@ import (
 	"enterprise-llm-tracker/internal/store"
 )
 
-// EfficiencyRollup aggregates usage_events + github_prs into engineer_signals
-// rows on a nightly schedule. Produces one row per (engineer, window) for the
-// 1d/7d/30d/180d windows defined in efficiency.go.
-//
-// Idempotent: re-running the same window overwrites the same row, so a missed
-// tick can be replayed safely.
+// EfficiencyRollup aggregates usage_events + github_prs into one
+// engineer_signals row per (engineer, window) on a nightly schedule.
+// Idempotent — re-running a window just overwrites the same row.
 type EfficiencyRollup struct {
 	store    *store.Store
 	registry *registry.EngineerRegistry
@@ -118,10 +115,9 @@ func (r *EfficiencyRollup) RunOnce(ctx context.Context, source string) {
 		slog.String("source", source), slog.Duration("duration", time.Since(start)))
 }
 
-// computeOne builds the EngineerSignal row for one (engineer, window).
-// Returns (sig, dpr, hasMerges, err). hasMerges flags whether $/PR is
-// defined (engineer had >0 merged-non-reverted PRs in the window) so the
-// cohort pass knows whether to include this engineer in the median.
+// computeOne builds the EngineerSignal row for one (engineer, window). The
+// bool return flags whether $/PR is defined, so the cohort pass knows
+// whether to include this engineer in the median.
 func (r *EfficiencyRollup) computeOne(
 	ctx context.Context,
 	eng registry.Engineer,
@@ -203,10 +199,8 @@ func medianOf(xs []float64) float64 {
 	return (cp[mid-1] + cp[mid]) / 2
 }
 
-// percentileRank returns 0..100: the percentage of the cohort whose $/PR is
-// strictly greater than or equal to this engineer's (i.e. lower number = more
-// expensive than peers). Inverted so "low rank" reads as "good ranking on
-// efficiency leaderboard."
+// percentileRank returns 0..100, the % of the cohort at or above this $/PR.
+// Inverted so a low rank reads as "doing well" on the efficiency leaderboard.
 func percentileRank(cohort []float64, value float64) int {
 	if len(cohort) == 0 {
 		return 0

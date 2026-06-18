@@ -90,17 +90,14 @@ type SignalsConfig struct {
 	// HourlyBaselineWindowDays bounds how far back we look for the hourly p95
 	// used by burst detection (defaults to 14).
 	HourlyBaselineWindowDays int `yaml:"hourly_baseline_window_days"`
-	// MinBaselineDays is the minimum number of distinct active days an
-	// engineer must have before we emit Z-score or rhythm-break signals for
-	// them. Below this floor the detector skips to avoid noisy alerts on new
-	// hires. Defaults to 14.
+	// MinBaselineDays is the minimum active days before Z-score/rhythm-break
+	// signals fire for an engineer — skips noisy alerts on new hires. Defaults to 14.
 	MinBaselineDays int `yaml:"min_baseline_days"`
 	// BurstWindowMinutes is the rolling window for burst detection
 	// (defaults to 30 min).
 	BurstWindowMinutes int `yaml:"burst_window_minutes"`
-	// BurstMultiplier is the multiple of an engineer's hourly p95 that
-	// triggers a `warn` burst (defaults to 2.0). `critical` fires at
-	// BurstMultiplier * 1.5.
+	// BurstMultiplier × hourly p95 triggers a `warn` burst (defaults to 2.0);
+	// `critical` fires at BurstMultiplier * 1.5.
 	BurstMultiplier float64 `yaml:"burst_multiplier"`
 	// ZScoreWarn / ZScoreCritical are the stddev cutoffs for spend_zscore_high
 	// (defaults 2.0 / 3.0).

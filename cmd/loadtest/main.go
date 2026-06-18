@@ -1,46 +1,6 @@
-// Command loadtest is a concurrent load generator for the Sentinel pipeline.
-//
-// It drives two paths:
-//
-//	--mode ingest  POSTs real OTLP protobuf metrics to the ingest hot path
-//	               (sentinel-api :8081/ingest/otel/v1/metrics, or the otelcol
-//	               :4318/v1/metrics receiver). This is the path every Claude
-//	               Code session hits — Redis INCR + async Kafka produce.
-//	--mode admin   GETs the admin/dashboard read endpoints (leaderboard,
-//	               engineers, signals) with a bearer token. This is what the
-//	               Next.js dashboard polls.
-//
-// Two load shapes:
-//
-//	closed-loop (default, --rate 0): --workers goroutines each fire requests
-//	  back-to-back. Ramp --workers to find the saturation point / max RPS.
-//	open-loop (--rate N>0): a pacer emits jobs at N req/sec regardless of
-//	  latency; workers drain them. Latency is measured from each job's intended
-//	  send time (so queueing delay is captured, avoiding coordinated omission).
-//	  Use this for fixed-rate soak tests. --overruns in the summary counts jobs
-//	  the workers couldn't start on time — a saturation signal.
-//
-// Output: a human summary plus, with --out, a JSON result file for charting.
-//
-// IMPORTANT: ingest traffic is only recorded if the engineer email is in the
-// registry (loaded from the engineers table). Seed first with
-// scripts/seed_load_engineers.sql (default 200 engineers) and keep
-// --engineers <= the seeded count, or events are silently dropped as
-// unattributed (the handler still returns 200, so the client can't see it —
-// verify recorded volume via Redis/Postgres counts).
-//
-// Examples:
-//
-//	# 500 concurrent workers, 30s, direct to sentinel-api, 10 data points/req
-//	go run ./cmd/loadtest --mode ingest --workers 500 --duration 30s --batch 10 \
-//	    --target http://localhost:8081/ingest/otel/v1/metrics --out r.json
-//
-//	# fixed 200 req/sec soak for 1h (open-loop)
-//	go run ./cmd/loadtest --mode ingest --rate 200 --duration 1h --workers 64
-//
-//	# admin read load: 200 workers hitting leaderboard/engineers/signals
-//	go run ./cmd/loadtest --mode admin --workers 200 --duration 30s \
-//	    --target http://localhost:8081 --token "$SENTINEL_ADMIN_TOKEN"
+// Command loadtest load-tests Sentinel: --mode ingest hits the OTLP hot path,
+// --mode admin hits the dashboard read endpoints. Engineers must be pre-seeded
+// (scripts/seed_load_engineers.sql) or ingest traffic drops silently. Run with -h.
 package main
 
 import (
@@ -339,11 +299,9 @@ func doRequest(client *http.Client, spec reqSpec) (int, error) {
 	return resp.StatusCode, nil
 }
 
-// pacer emits intended-send timestamps onto jobs at ~rate per second using a
-// 1ms tick with a fractional accumulator (so non-multiple-of-1000 rates are
-// still accurate on average). If a worker isn't ready, the send is dropped and
-// counted as an overrun rather than blocking (which would corrupt the open-loop
-// model into closed-loop).
+// pacer emits intended-send timestamps onto jobs at ~rate/sec via a 1ms tick
+// with a fractional accumulator. A send that can't proceed immediately is
+// dropped and counted as an overrun rather than blocking into closed-loop.
 func pacer(ctx context.Context, rate int, jobs chan<- time.Time, overruns *uint64) {
 	defer close(jobs)
 	const tickHz = 1000

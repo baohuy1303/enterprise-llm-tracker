@@ -1,29 +1,40 @@
-run:
-  timeout: 5m
-  # Go version is read from go.mod (1.26). CI builds golangci-lint from source
-  # with the runner's matching toolchain (install-mode: goinstall) so its
-  # type-checker understands 1.26 — a prebuilt binary lags and rejects it.
-
+version: "2"
 linters:
   enable:
-    - gosimple       # simplification suggestions
-    - govet          # vet checks (shadow, printf, etc.)
-    - ineffassign    # assignments to variables never used after assignment
-    - staticcheck    # staticcheck suite
-    - unused         # unused code
-    - gofmt          # formatting
-    - goimports      # import ordering
-    - misspell       # common english misspellings in comments/strings
-    - unconvert      # remove unnecessary type conversions
-
-linters-settings:
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment   # struct padding — not worth the noise at this stage
-      - shadow           # flags idiomatic "if err := f(); err != nil" patterns
-  goimports:
-    local-prefixes: enterprise-llm-tracker
-
-issues:
-  exclude-rules: []
+    - misspell
+    - unconvert
+  settings:
+    govet:
+      # fieldalignment: struct padding — not worth the noise at this stage.
+      # shadow: flags idiomatic "if err := f(); err != nil" patterns.
+      disable:
+        - fieldalignment
+        - shadow
+      enable-all: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - ^sentinel-admin/
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - enterprise-llm-tracker
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - ^sentinel-admin/

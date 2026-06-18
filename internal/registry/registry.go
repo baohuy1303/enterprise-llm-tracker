@@ -2,7 +2,7 @@ package registry
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -171,7 +171,7 @@ func (r *EngineerRegistry) StartRefresh(ctx context.Context) {
 				return
 			case <-ticker.C:
 				if err := r.Load(ctx); err != nil {
-					log.Printf("registry refresh failed: %v", err)
+					slog.Default().Warn("registry refresh failed", slog.String("err", err.Error()))
 				}
 			}
 		}

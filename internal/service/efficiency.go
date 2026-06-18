@@ -25,18 +25,9 @@ var efficiencyWindows = []efficiencyWindow{
 	{name: "180d", days: 180},
 }
 
-// EfficiencyCollector orchestrates the GitHub fetch → revert detect →
-// efficiency compute pipeline. One instance runs inside sentinel-workers.
-//
-// Trigger model:
-//   - Hourly cron tick (safety net)
-//   - Kafka github-trigger consumer calls Trigger() on PR/commit events;
-//     triggers are debounced and coalesced (channel buffered to 1)
-//   - HTTP /admin/refresh-efficiency also calls Trigger() and returns 202
-//
-// Concurrency: runMu guarantees only one collector pass at a time. If a
-// trigger arrives during a run, the buffered channel slot ensures we run
-// once more after the current pass finishes (no missed triggers).
+// EfficiencyCollector runs GitHub fetch -> revert detect -> efficiency compute.
+// Triggered by cron, Kafka PR/commit events, or the admin API; runMu plus a
+// buffered trigger channel ensure runs never overlap and triggers never get lost.
 type EfficiencyCollector struct {
 	gh       *gh.Client
 	store    *store.Store
@@ -135,11 +126,8 @@ func (c *EfficiencyCollector) runOnce(ctx context.Context, source string) {
 	start := time.Now()
 	c.logger.Info("collector run started", slog.String("source", source))
 
-	// Drain dirty set so concurrent triggers during this run aren't lost — the
-	// next trigger after this run will pick them up. (For now the dirty set is
-	// informational; we always do a full org scan because the GitHub search
-	// query is cheap and ensures we never miss revert detection for engineers
-	// who weren't recently active.)
+	// Drained for visibility only — we always do a full org scan anyway, since
+	// the GitHub search query is cheap and catches inactive engineers too.
 	dirty, _ := c.store.DrainDirtyEngineers(ctx)
 	if len(dirty) > 0 {
 		c.logger.Info("collector dirty engineers drained",
@@ -148,8 +136,7 @@ func (c *EfficiencyCollector) runOnce(ctx context.Context, source string) {
 
 	if err := c.fetchAndStore(ctx); err != nil {
 		c.logger.Error("collector fetch failed", slog.String("err", err.Error()))
-		// fall through to efficiency compute anyway — we may have partial fresh
-		// data plus the existing PR table, so the snapshots are still useful.
+		// fall through — partial fresh data + existing PR table are still useful
 	}
 
 	c.detectAndMarkReverts(ctx)

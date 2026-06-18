@@ -37,12 +37,9 @@ func NewIngestService(reg *registry.EngineerRegistry, st *store.Store, prod *kaf
 	return &IngestService{registry: reg, store: st, producer: prod, logger: logger}
 }
 
-// RecordMetric processes a single OTel metric data point:
-//  1. attribute the event to a known engineer (drop if unattributed)
-//  2. map the metric name to Event fields
-//  3. increment Redis counters synchronously (hot-path dashboard reads)
-//  4. publish to Kafka asynchronously (Postgres write + threshold check happen
-//     in the workers binary)
+// RecordMetric attributes an OTel data point to a known engineer, then:
+// attribute -> Redis counters (sync, hot-path reads) -> Kafka (async, PG write
+// + threshold check happen in the workers binary).
 func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[string]string, name string, value float64, ts time.Time) {
 	if !strings.HasPrefix(name, "claude_code.") {
 		return
@@ -116,10 +113,8 @@ func (s *IngestService) RecordMetric(ctx context.Context, resAttrs, dpAttrs map[
 	s.logger.Info("usage_event", args...)
 }
 
-// RecordLogEvent processes a single OTel log record. Log events are forensic
-// per-prompt records — they don't roll up into Redis counters (the metric
-// stream already covers cost/token accumulation), but they're still published
-// to Kafka so the PG writer captures them in usage_events.
+// RecordLogEvent publishes a forensic per-prompt log record to Kafka. Unlike
+// RecordMetric, it skips Redis — the metric stream already covers counters.
 func (s *IngestService) RecordLogEvent(ctx context.Context, resAttrs, eventAttrs map[string]string, eventName string, ts time.Time) {
 	engineer, known := s.lookupEngineer(eventAttrs, resAttrs)
 	if !known {

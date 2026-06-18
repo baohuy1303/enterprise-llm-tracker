@@ -261,10 +261,8 @@ func (s *Store) PublishCollectorTrigger(ctx context.Context) error {
 }
 
 // SubscribeCollectorTriggers returns a channel that fires once per incoming
-// trigger message. Caller must keep the returned closer reachable for the
-// lifetime of the subscription; closing it unsubscribes. Errors from the
-// underlying pub/sub are logged but not surfaced — the collector still has
-// its cron tick as a safety net.
+// trigger message, plus a closer to unsubscribe. Pub/sub errors aren't
+// surfaced — the collector's cron tick is the safety net.
 func (s *Store) SubscribeCollectorTriggers(ctx context.Context) (<-chan struct{}, func() error) {
 	sub := s.rdb.Subscribe(ctx, collectorTriggerChannel)
 	msgs := sub.Channel()

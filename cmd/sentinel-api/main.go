@@ -44,11 +44,13 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 }
 
+// Wiring order: config -> postgres/redis -> kafka -> store/registry -> services -> router -> http server.
 func main() {
 	// .env is optional — in production, env vars come from the orchestrator.
 	_ = godotenv.Load()
 	setupLogger()
 
+	// --- config ---
 	configPath := "sentinel.yaml"
 	if v := os.Getenv("SENTINEL_CONFIG"); v != "" {
 		configPath = v
@@ -66,6 +68,7 @@ func main() {
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	defer rootCancel()
 
+	// --- postgres + migrations ---
 	pgPool, err := pgxpool.New(rootCtx, cfg.Postgres.URL)
 	if err != nil {
 		log.Fatalf("postgres connect: %v", err)
@@ -83,6 +86,7 @@ func main() {
 		log.Printf("migrations applied: %v", applied)
 	}
 
+	// --- redis ---
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.Redis.Addr})
 	defer rdb.Close()
 	if err := pingWithTimeout(rootCtx, 5*time.Second, func(ctx context.Context) error {
@@ -91,6 +95,7 @@ func main() {
 		log.Fatalf("redis ping: %v", err)
 	}
 
+	// --- kafka topic + producer ---
 	if err := appkafka.EnsureTopic(cfg.Kafka.Brokers, cfg.Kafka.Topic, usageEventsPartitions); err != nil {
 		log.Printf("kafka EnsureTopic warning: %v (continuing — topic may already exist)", err)
 	} else {
@@ -99,6 +104,7 @@ func main() {
 	producer := appkafka.NewProducer(cfg.Kafka.Brokers, cfg.Kafka.Topic, slog.Default())
 	defer producer.Close()
 
+	// --- store + engineer registry ---
 	st := store.New(pgPool, rdb)
 
 	reg := registry.New(pgPool, time.Duration(cfg.Registry.RefreshIntervalSeconds)*time.Second)
@@ -116,8 +122,9 @@ func main() {
 		log.Printf("redis counters rebuilt from postgres")
 	}
 
+	// --- services + router ---
 	ingestSvc := service.NewIngestService(reg, st, producer, slog.Default())
-	ingestHandler := ingest.New(ingestSvc, nil)
+	ingestHandler := ingest.New(ingestSvc, slog.Default())
 
 	engineerSvc := service.NewEngineerService(st, reg, slog.Default())
 
@@ -131,6 +138,7 @@ func main() {
 	}
 	router := apphttp.NewRouter(ingestHandler, reg, st, engineerSvc, adminToken)
 
+	// --- http server ---
 	srv := &http.Server{
 		Addr:    cfg.Listen,
 		Handler: router,

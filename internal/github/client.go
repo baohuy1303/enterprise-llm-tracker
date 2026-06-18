@@ -1,10 +1,6 @@
-// Package github wraps the GitHub GraphQL v4 API for the efficiency collector.
-//
-// Two responsibilities:
-//  1. Authenticated client construction (PAT bearer via oauth2)
-//  2. Rate-limit awareness — GraphQL queries return a `rateLimit { remaining,
-//     resetAt }` block that we surface so the collector can back off before
-//     burning through the 5000 points/hour budget.
+// Package github wraps the GitHub GraphQL v4 API for the efficiency collector:
+// authenticated client construction plus rate-limit tracking so the collector
+// can back off before burning through the 5000 points/hour budget.
 package github
 
 import (

@@ -41,11 +41,13 @@ func setupLogger() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 }
 
+// Wiring order: config -> postgres/redis -> store -> registry -> services -> kafka consumers.
 func main() {
 	// .env is optional — in production, env vars come from the orchestrator.
 	_ = godotenv.Load()
 	setupLogger()
 
+	// --- config ---
 	configPath := "sentinel.yaml"
 	if v := os.Getenv("SENTINEL_CONFIG"); v != "" {
 		configPath = v
@@ -59,6 +61,7 @@ func main() {
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	defer rootCancel()
 
+	// --- postgres + redis ---
 	pgPool, err := pgxpool.New(rootCtx, cfg.Postgres.URL)
 	if err != nil {
 		log.Fatalf("postgres connect: %v", err)
@@ -78,9 +81,7 @@ func main() {
 
 	st := store.New(pgPool, rdb)
 
-	// Minimal health server so Kubernetes can liveness/readiness probe the
-	// workers process — it otherwise has no HTTP surface. Liveness = process is
-	// up; readiness = Postgres + Redis reachable.
+	// --- health server (k8s liveness/readiness probes; workers has no other HTTP surface) ---
 	healthAddr := ":8082"
 	if v := os.Getenv("WORKERS_HEALTH_ADDR"); v != "" {
 		healthAddr = v
@@ -112,12 +113,14 @@ func main() {
 		}
 	}()
 
+	// --- engineer registry ---
 	reg := registry.New(pgPool, time.Duration(cfg.Registry.RefreshIntervalSeconds)*time.Second)
 	if err := reg.Load(rootCtx); err != nil {
 		log.Fatalf("registry initial load: %v", err)
 	}
 	reg.StartRefresh(rootCtx)
 
+	// --- services ---
 	slackToken := os.Getenv(cfg.Slack.BotTokenEnv)
 	slackClient := slack.New(slackToken, slog.Default())
 	if !slackClient.Configured() {
@@ -154,6 +157,7 @@ func main() {
 			cfg.GitHub.TokenEnv)
 	}
 
+	// --- kafka consumers ---
 	prefix := cfg.Kafka.ConsumerGroupPrefix
 	if prefix == "" {
 		prefix = "sentinel"
@@ -170,7 +174,8 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	// Reader and consumer will be instantiated in the same thread
+	// Construct every consumer here on the main goroutine before spawning Run()
+	// below, so closers always lists all of them even if a goroutine never starts.
 	closers := make([]*appkafka.Consumer, 0, len(consumers))
 	for _, c := range consumers {
 		consumer := appkafka.NewConsumer(cfg.Kafka.Brokers, cfg.Kafka.Topic, c.groupID, slog.Default())

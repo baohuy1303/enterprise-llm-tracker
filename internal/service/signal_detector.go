@@ -23,13 +23,8 @@ const (
 )
 
 // SignalDetector is the Kafka consumer that emits per-event detection signals
-// (burst, daily-spend Z-score, rhythm break). One instance runs in
-// sentinel-workers behind its own consumer group, so it scales independently
-// of the threshold-checker and postgres-writer.
-//
-// Per-event work is cheap: 1–2 Redis reads + at most a SET, then a write to
-// signal_events only when something fires. Dedup keys keep the same signal
-// from firing twice per UTC day for one engineer.
+// (burst, daily-spend Z-score, rhythm break) in its own consumer group, scaling
+// independently of the threshold-checker and postgres-writer.
 type SignalDetector struct {
 	store    *store.Store
 	registry *registry.EngineerRegistry

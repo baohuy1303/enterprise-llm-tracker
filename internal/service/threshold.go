@@ -39,11 +39,8 @@ func NewThresholdService(
 	}
 }
 
-// HandleEvent inspects the engineer's current daily/monthly Redis counters and
-// fires a Slack DM + audit row for any newly-crossed threshold. Returns nil
-// even if Slack delivery fails — the message is logged but the offset is still
-// committed, since redelivery wouldn't help (Slack outage, not a transient
-// consumer error).
+// HandleEvent fires a Slack DM + audit row for any newly-crossed budget
+// threshold. Always returns nil — a Slack outage shouldn't block the offset.
 func (t *ThresholdService) HandleEvent(ctx context.Context, e store.Event) error {
 	eng, ok := t.registry.LookupByEmail(e.EngineerID)
 	if !ok {

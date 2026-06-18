@@ -12,12 +12,9 @@ import (
 	"enterprise-llm-tracker/internal/store"
 )
 
-// BaselineRebuilder rebuilds per-engineer baselines (daily mean/stddev,
-// hourly p95, hour-of-day distribution) on a cron tick. Output goes to Redis
-// under engineer:{email}:baseline:* keys; the SignalDetector reads it on every
-// event for Z-score and rhythm-break checks.
-//
-// Runs once at startup, then every BaselineRebuildIntervalSeconds (default 24h).
+// BaselineRebuilder rebuilds per-engineer baselines (daily mean/stddev, hourly
+// p95, hour-of-day distribution) on a cron tick and saves them to Redis, where
+// SignalDetector reads them for Z-score and rhythm-break checks.
 type BaselineRebuilder struct {
 	store    *store.Store
 	registry *registry.EngineerRegistry

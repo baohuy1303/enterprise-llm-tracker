@@ -23,7 +23,7 @@ type rateLimit struct {
 // shape; if it's missing we just skip the update (no harm).
 func extractRateLimit(q any) (rateLimit, bool) {
 	v := reflect.ValueOf(q)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if v.Kind() != reflect.Struct {
