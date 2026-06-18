@@ -40,7 +40,7 @@ SELECT
   format('Load Test %s', lpad(g::text, 4, '0')),
   format('loadtest-%s', lpad(g::text, 4, '0')),
   NULL, NULL,
-  1000000, 100000000,                 -- budgets high enough to never alert
+  1000000, 90000000,                  -- high enough to never alert; must stay < 10^8 (NUMERIC(10,2))
   'loadtest',
   TRUE
 FROM generate_series(1, :n) AS g;
