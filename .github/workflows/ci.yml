@@ -23,12 +23,12 @@ jobs:
           cache: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
-          # Build golangci-lint from source with the runner's Go 1.26 toolchain.
-          # The prebuilt binary is compiled with an older Go and its type-checker
-          # rejects 1.26 stdlib/deps ("package requires newer Go version").
+          # v8+ is required for golangci-lint v2 (our .golangci.yml is v2-format).
+          # goinstall builds from source so a lagging prebuilt binary never
+          # blocks a newer Go toolchain.
           install-mode: goinstall
           args: --timeout=5m
 

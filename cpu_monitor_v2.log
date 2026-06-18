@@ -1,0 +1,835 @@
+=== 08:06:04 === host_cpu=5%
+enterprise-llm-tracker-kafka-1	1.04%
+enterprise-llm-tracker-postgres-1	0.01%
+enterprise-llm-tracker-otelcol-1	0.12%
+enterprise-llm-tracker-redis-1	0.33%
+=== 08:06:13 === host_cpu=1%
+enterprise-llm-tracker-kafka-1	1.92%
+enterprise-llm-tracker-postgres-1	4.46%
+enterprise-llm-tracker-otelcol-1	0.13%
+enterprise-llm-tracker-redis-1	2.03%
+=== 08:06:21 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	209.38%
+enterprise-llm-tracker-postgres-1	23.50%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	19.36%
+=== 08:06:30 === host_cpu=65%
+enterprise-llm-tracker-kafka-1	268.38%
+enterprise-llm-tracker-postgres-1	20.12%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	18.19%
+=== 08:06:39 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	52.29%
+enterprise-llm-tracker-postgres-1	10.73%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.92%
+=== 08:06:47 === host_cpu=49%
+enterprise-llm-tracker-kafka-1	153.89%
+enterprise-llm-tracker-postgres-1	7.86%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.48%
+=== 08:06:56 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	265.80%
+enterprise-llm-tracker-postgres-1	6.71%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.36%
+=== 08:07:05 === host_cpu=63%
+enterprise-llm-tracker-kafka-1	201.24%
+enterprise-llm-tracker-postgres-1	7.31%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.07%
+=== 08:07:13 === host_cpu=74%
+enterprise-llm-tracker-kafka-1	79.94%
+enterprise-llm-tracker-postgres-1	10.58%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.12%
+=== 08:07:22 === host_cpu=55%
+enterprise-llm-tracker-kafka-1	51.34%
+enterprise-llm-tracker-postgres-1	6.61%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.53%
+=== 08:07:31 === host_cpu=64%
+enterprise-llm-tracker-kafka-1	51.73%
+enterprise-llm-tracker-postgres-1	6.32%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	16.97%
+=== 08:07:39 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	44.84%
+enterprise-llm-tracker-postgres-1	6.26%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.03%
+=== 08:07:48 === host_cpu=44%
+enterprise-llm-tracker-kafka-1	108.96%
+enterprise-llm-tracker-postgres-1	6.94%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.28%
+=== 08:07:56 === host_cpu=48%
+enterprise-llm-tracker-kafka-1	235.42%
+enterprise-llm-tracker-postgres-1	7.46%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.30%
+=== 08:08:05 === host_cpu=65%
+enterprise-llm-tracker-kafka-1	280.30%
+enterprise-llm-tracker-postgres-1	7.66%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.69%
+=== 08:08:14 === host_cpu=31%
+enterprise-llm-tracker-kafka-1	292.98%
+enterprise-llm-tracker-postgres-1	8.18%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.51%
+=== 08:08:22 === host_cpu=43%
+enterprise-llm-tracker-kafka-1	176.95%
+enterprise-llm-tracker-postgres-1	7.61%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.28%
+=== 08:08:31 === host_cpu=57%
+enterprise-llm-tracker-kafka-1	80.39%
+enterprise-llm-tracker-postgres-1	6.83%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.57%
+=== 08:08:40 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	212.66%
+enterprise-llm-tracker-postgres-1	12.80%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	18.24%
+=== 08:08:48 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	30.78%
+enterprise-llm-tracker-postgres-1	6.14%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	13.44%
+=== 08:08:57 === host_cpu=59%
+enterprise-llm-tracker-kafka-1	125.20%
+enterprise-llm-tracker-postgres-1	6.41%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.54%
+=== 08:09:06 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	30.84%
+enterprise-llm-tracker-postgres-1	11.81%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	11.68%
+=== 08:09:14 === host_cpu=31%
+enterprise-llm-tracker-kafka-1	316.43%
+enterprise-llm-tracker-postgres-1	7.50%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	13.53%
+=== 08:09:23 === host_cpu=31%
+enterprise-llm-tracker-kafka-1	239.77%
+enterprise-llm-tracker-postgres-1	7.89%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	11.48%
+=== 08:09:32 === host_cpu=21%
+enterprise-llm-tracker-kafka-1	220.05%
+enterprise-llm-tracker-postgres-1	12.28%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.86%
+=== 08:09:40 === host_cpu=27%
+enterprise-llm-tracker-kafka-1	108.40%
+enterprise-llm-tracker-postgres-1	7.80%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	11.72%
+=== 08:09:49 === host_cpu=42%
+enterprise-llm-tracker-kafka-1	188.38%
+enterprise-llm-tracker-postgres-1	7.34%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	12.06%
+=== 08:09:58 === host_cpu=38%
+enterprise-llm-tracker-kafka-1	30.93%
+enterprise-llm-tracker-postgres-1	11.13%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.63%
+=== 08:10:06 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	47.86%
+enterprise-llm-tracker-postgres-1	10.97%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.72%
+=== 08:10:15 === host_cpu=58%
+enterprise-llm-tracker-kafka-1	32.11%
+enterprise-llm-tracker-postgres-1	20.91%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	13.32%
+=== 08:10:23 === host_cpu=28%
+enterprise-llm-tracker-kafka-1	104.66%
+enterprise-llm-tracker-postgres-1	9.21%
+enterprise-llm-tracker-otelcol-1	0.03%
+enterprise-llm-tracker-redis-1	12.25%
+=== 08:10:32 === host_cpu=24%
+enterprise-llm-tracker-kafka-1	251.56%
+enterprise-llm-tracker-postgres-1	14.02%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.52%
+=== 08:10:41 === host_cpu=15%
+enterprise-llm-tracker-kafka-1	108.52%
+enterprise-llm-tracker-postgres-1	6.39%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.41%
+=== 08:10:49 === host_cpu=56%
+enterprise-llm-tracker-kafka-1	105.88%
+enterprise-llm-tracker-postgres-1	8.89%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	66.13%
+=== 08:10:58 === host_cpu=71%
+enterprise-llm-tracker-kafka-1	103.02%
+enterprise-llm-tracker-postgres-1	8.15%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	55.45%
+=== 08:11:07 === host_cpu=57%
+enterprise-llm-tracker-kafka-1	179.43%
+enterprise-llm-tracker-postgres-1	7.34%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.33%
+=== 08:11:15 === host_cpu=65%
+enterprise-llm-tracker-kafka-1	328.68%
+enterprise-llm-tracker-postgres-1	7.80%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.36%
+=== 08:11:24 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	299.88%
+enterprise-llm-tracker-postgres-1	8.04%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.83%
+=== 08:11:33 === host_cpu=63%
+enterprise-llm-tracker-kafka-1	124.92%
+enterprise-llm-tracker-postgres-1	8.25%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.47%
+=== 08:11:41 === host_cpu=63%
+enterprise-llm-tracker-kafka-1	140.31%
+enterprise-llm-tracker-postgres-1	7.77%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.57%
+=== 08:11:50 === host_cpu=62%
+enterprise-llm-tracker-kafka-1	130.06%
+enterprise-llm-tracker-postgres-1	9.66%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	19.09%
+=== 08:11:59 === host_cpu=55%
+enterprise-llm-tracker-kafka-1	62.05%
+enterprise-llm-tracker-postgres-1	6.90%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.58%
+=== 08:12:07 === host_cpu=53%
+enterprise-llm-tracker-kafka-1	214.76%
+enterprise-llm-tracker-postgres-1	7.20%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.74%
+=== 08:12:16 === host_cpu=71%
+enterprise-llm-tracker-kafka-1	51.86%
+enterprise-llm-tracker-postgres-1	6.55%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.23%
+=== 08:12:25 === host_cpu=66%
+enterprise-llm-tracker-kafka-1	143.14%
+enterprise-llm-tracker-postgres-1	7.01%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.80%
+=== 08:12:33 === host_cpu=56%
+enterprise-llm-tracker-kafka-1	50.91%
+enterprise-llm-tracker-postgres-1	11.02%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	16.90%
+=== 08:12:42 === host_cpu=46%
+enterprise-llm-tracker-kafka-1	82.34%
+enterprise-llm-tracker-postgres-1	6.58%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.84%
+=== 08:12:51 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	52.25%
+enterprise-llm-tracker-postgres-1	6.26%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	19.40%
+=== 08:12:59 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	334.39%
+enterprise-llm-tracker-postgres-1	13.87%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	12.44%
+=== 08:13:08 === host_cpu=22%
+enterprise-llm-tracker-kafka-1	250.78%
+enterprise-llm-tracker-postgres-1	7.05%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.63%
+=== 08:13:17 === host_cpu=27%
+enterprise-llm-tracker-kafka-1	256.04%
+enterprise-llm-tracker-postgres-1	7.47%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.72%
+=== 08:13:25 === host_cpu=56%
+enterprise-llm-tracker-kafka-1	301.84%
+enterprise-llm-tracker-postgres-1	7.39%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	13.15%
+=== 08:13:34 === host_cpu=23%
+enterprise-llm-tracker-kafka-1	14.08%
+enterprise-llm-tracker-postgres-1	6.22%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.33%
+=== 08:13:42 === host_cpu=40%
+enterprise-llm-tracker-kafka-1	12.52%
+enterprise-llm-tracker-postgres-1	5.72%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.35%
+=== 08:13:51 === host_cpu=14%
+enterprise-llm-tracker-kafka-1	201.14%
+enterprise-llm-tracker-postgres-1	6.91%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.36%
+=== 08:14:00 === host_cpu=27%
+enterprise-llm-tracker-kafka-1	155.08%
+enterprise-llm-tracker-postgres-1	10.44%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.35%
+=== 08:14:08 === host_cpu=31%
+enterprise-llm-tracker-kafka-1	166.96%
+enterprise-llm-tracker-postgres-1	9.41%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.34%
+=== 08:14:17 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	12.97%
+enterprise-llm-tracker-postgres-1	6.08%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	1.95%
+=== 08:14:26 === host_cpu=22%
+enterprise-llm-tracker-kafka-1	141.71%
+enterprise-llm-tracker-postgres-1	10.23%
+enterprise-llm-tracker-otelcol-1	0.93%
+enterprise-llm-tracker-redis-1	0.35%
+=== 08:14:34 === host_cpu=39%
+enterprise-llm-tracker-kafka-1	207.32%
+enterprise-llm-tracker-postgres-1	5.47%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.35%
+=== 08:14:43 === host_cpu=14%
+enterprise-llm-tracker-kafka-1	234.97%
+enterprise-llm-tracker-postgres-1	5.51%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	2.30%
+=== 08:14:51 === host_cpu=26%
+enterprise-llm-tracker-kafka-1	12.64%
+enterprise-llm-tracker-postgres-1	5.55%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.36%
+=== 08:15:00 === host_cpu=11%
+enterprise-llm-tracker-kafka-1	10.73%
+enterprise-llm-tracker-postgres-1	4.92%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.34%
+=== 08:15:09 === host_cpu=29%
+enterprise-llm-tracker-kafka-1	101.13%
+enterprise-llm-tracker-postgres-1	22.04%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	13.68%
+=== 08:15:17 === host_cpu=85%
+enterprise-llm-tracker-kafka-1	144.21%
+enterprise-llm-tracker-postgres-1	16.94%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	78.45%
+=== 08:15:26 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	336.60%
+enterprise-llm-tracker-postgres-1	6.48%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.73%
+=== 08:15:35 === host_cpu=55%
+enterprise-llm-tracker-kafka-1	334.58%
+enterprise-llm-tracker-postgres-1	6.05%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.76%
+=== 08:15:43 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	590.60%
+enterprise-llm-tracker-postgres-1	6.63%
+enterprise-llm-tracker-otelcol-1	0.03%
+enterprise-llm-tracker-redis-1	18.27%
+=== 08:15:52 === host_cpu=62%
+enterprise-llm-tracker-kafka-1	142.17%
+enterprise-llm-tracker-postgres-1	14.07%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.57%
+=== 08:16:01 === host_cpu=48%
+enterprise-llm-tracker-kafka-1	332.53%
+enterprise-llm-tracker-postgres-1	7.41%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.49%
+=== 08:16:09 === host_cpu=73%
+enterprise-llm-tracker-kafka-1	184.24%
+enterprise-llm-tracker-postgres-1	7.39%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.97%
+=== 08:16:18 === host_cpu=55%
+enterprise-llm-tracker-kafka-1	344.27%
+enterprise-llm-tracker-postgres-1	7.73%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.54%
+=== 08:16:27 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	330.26%
+enterprise-llm-tracker-postgres-1	7.35%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.19%
+=== 08:16:35 === host_cpu=42%
+enterprise-llm-tracker-kafka-1	272.71%
+enterprise-llm-tracker-postgres-1	5.73%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.75%
+=== 08:16:44 === host_cpu=45%
+enterprise-llm-tracker-kafka-1	379.08%
+enterprise-llm-tracker-postgres-1	14.10%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	19.48%
+=== 08:16:53 === host_cpu=35%
+enterprise-llm-tracker-kafka-1	196.88%
+enterprise-llm-tracker-postgres-1	7.36%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.93%
+=== 08:17:01 === host_cpu=48%
+enterprise-llm-tracker-kafka-1	191.42%
+enterprise-llm-tracker-postgres-1	6.42%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.15%
+=== 08:17:10 === host_cpu=53%
+enterprise-llm-tracker-kafka-1	165.51%
+enterprise-llm-tracker-postgres-1	44.67%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	18.69%
+=== 08:17:19 === host_cpu=59%
+enterprise-llm-tracker-kafka-1	262.96%
+enterprise-llm-tracker-postgres-1	10.67%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	19.81%
+=== 08:17:27 === host_cpu=57%
+enterprise-llm-tracker-kafka-1	48.64%
+enterprise-llm-tracker-postgres-1	5.75%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.19%
+=== 08:17:36 === host_cpu=57%
+enterprise-llm-tracker-kafka-1	93.65%
+enterprise-llm-tracker-postgres-1	5.11%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.44%
+=== 08:17:45 === host_cpu=71%
+enterprise-llm-tracker-kafka-1	49.53%
+enterprise-llm-tracker-postgres-1	5.04%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.36%
+=== 08:17:53 === host_cpu=62%
+enterprise-llm-tracker-kafka-1	28.21%
+enterprise-llm-tracker-postgres-1	4.92%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	15.07%
+=== 08:18:02 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	34.64%
+enterprise-llm-tracker-postgres-1	5.16%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.73%
+=== 08:18:10 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	152.14%
+enterprise-llm-tracker-postgres-1	5.56%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	13.51%
+=== 08:18:19 === host_cpu=29%
+enterprise-llm-tracker-kafka-1	267.55%
+enterprise-llm-tracker-postgres-1	10.26%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	12.13%
+=== 08:18:28 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	176.57%
+enterprise-llm-tracker-postgres-1	6.31%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.76%
+=== 08:18:36 === host_cpu=27%
+enterprise-llm-tracker-kafka-1	37.03%
+enterprise-llm-tracker-postgres-1	4.98%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.86%
+=== 08:18:45 === host_cpu=29%
+enterprise-llm-tracker-kafka-1	10.64%
+enterprise-llm-tracker-postgres-1	8.58%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	2.23%
+=== 08:18:54 === host_cpu=14%
+enterprise-llm-tracker-kafka-1	69.80%
+enterprise-llm-tracker-postgres-1	5.19%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.34%
+=== 08:19:02 === host_cpu=15%
+enterprise-llm-tracker-kafka-1	218.38%
+enterprise-llm-tracker-postgres-1	5.10%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.33%
+=== 08:19:11 === host_cpu=14%
+enterprise-llm-tracker-kafka-1	79.84%
+enterprise-llm-tracker-postgres-1	3.07%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	2.69%
+=== 08:19:20 === host_cpu=14%
+enterprise-llm-tracker-kafka-1	7.89%
+enterprise-llm-tracker-postgres-1	3.15%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	0.35%
+=== 08:19:28 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	30.95%
+enterprise-llm-tracker-postgres-1	5.77%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	0.34%
+=== 08:19:37 === host_cpu=88%
+enterprise-llm-tracker-kafka-1	84.80%
+enterprise-llm-tracker-postgres-1	19.80%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	93.76%
+=== 08:19:46 === host_cpu=94%
+enterprise-llm-tracker-kafka-1	83.76%
+enterprise-llm-tracker-postgres-1	18.56%
+enterprise-llm-tracker-otelcol-1	0.15%
+enterprise-llm-tracker-redis-1	94.66%
+=== 08:19:54 === host_cpu=63%
+enterprise-llm-tracker-kafka-1	271.63%
+enterprise-llm-tracker-postgres-1	6.71%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.02%
+=== 08:20:03 === host_cpu=59%
+enterprise-llm-tracker-kafka-1	294.54%
+enterprise-llm-tracker-postgres-1	6.14%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.88%
+=== 08:20:12 === host_cpu=46%
+enterprise-llm-tracker-kafka-1	272.95%
+enterprise-llm-tracker-postgres-1	12.71%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.95%
+=== 08:20:20 === host_cpu=42%
+enterprise-llm-tracker-kafka-1	214.99%
+enterprise-llm-tracker-postgres-1	5.85%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.47%
+=== 08:20:29 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	423.99%
+enterprise-llm-tracker-postgres-1	7.93%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.66%
+=== 08:20:38 === host_cpu=37%
+enterprise-llm-tracker-kafka-1	102.32%
+enterprise-llm-tracker-postgres-1	6.63%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.67%
+=== 08:20:46 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	280.93%
+enterprise-llm-tracker-postgres-1	6.94%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.08%
+=== 08:20:55 === host_cpu=59%
+enterprise-llm-tracker-kafka-1	322.34%
+enterprise-llm-tracker-postgres-1	7.54%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.45%
+=== 08:21:03 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	404.94%
+enterprise-llm-tracker-postgres-1	8.84%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.19%
+=== 08:21:12 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	301.01%
+enterprise-llm-tracker-postgres-1	5.46%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.80%
+=== 08:21:21 === host_cpu=56%
+enterprise-llm-tracker-kafka-1	259.00%
+enterprise-llm-tracker-postgres-1	6.10%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.72%
+=== 08:21:29 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	318.88%
+enterprise-llm-tracker-postgres-1	7.42%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.53%
+=== 08:21:38 === host_cpu=49%
+enterprise-llm-tracker-kafka-1	53.81%
+enterprise-llm-tracker-postgres-1	11.39%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.74%
+=== 08:21:47 === host_cpu=43%
+enterprise-llm-tracker-kafka-1	281.36%
+enterprise-llm-tracker-postgres-1	5.17%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.57%
+=== 08:21:55 === host_cpu=40%
+enterprise-llm-tracker-kafka-1	235.89%
+enterprise-llm-tracker-postgres-1	7.11%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.68%
+=== 08:22:04 === host_cpu=45%
+enterprise-llm-tracker-kafka-1	416.59%
+enterprise-llm-tracker-postgres-1	7.52%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	18.14%
+=== 08:22:13 === host_cpu=44%
+enterprise-llm-tracker-kafka-1	141.03%
+enterprise-llm-tracker-postgres-1	6.18%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.63%
+=== 08:22:21 === host_cpu=53%
+enterprise-llm-tracker-kafka-1	92.37%
+enterprise-llm-tracker-postgres-1	6.30%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.33%
+=== 08:22:30 === host_cpu=69%
+enterprise-llm-tracker-kafka-1	49.48%
+enterprise-llm-tracker-postgres-1	4.43%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.25%
+=== 08:22:39 === host_cpu=68%
+enterprise-llm-tracker-kafka-1	172.63%
+enterprise-llm-tracker-postgres-1	9.24%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.69%
+=== 08:22:47 === host_cpu=63%
+enterprise-llm-tracker-kafka-1	48.53%
+enterprise-llm-tracker-postgres-1	5.23%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.63%
+=== 08:22:56 === host_cpu=48%
+enterprise-llm-tracker-kafka-1	48.54%
+enterprise-llm-tracker-postgres-1	5.26%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.39%
+=== 08:23:05 === host_cpu=71%
+enterprise-llm-tracker-kafka-1	69.61%
+enterprise-llm-tracker-postgres-1	5.39%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	20.01%
+=== 08:23:13 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	118.86%
+enterprise-llm-tracker-postgres-1	6.43%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.19%
+=== 08:23:22 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	177.63%
+enterprise-llm-tracker-postgres-1	5.79%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.52%
+=== 08:23:30 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	209.01%
+enterprise-llm-tracker-postgres-1	5.46%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.47%
+=== 08:23:39 === host_cpu=20%
+enterprise-llm-tracker-kafka-1	376.24%
+enterprise-llm-tracker-postgres-1	6.95%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	12.06%
+=== 08:23:48 === host_cpu=18%
+enterprise-llm-tracker-kafka-1	210.68%
+enterprise-llm-tracker-postgres-1	5.53%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.96%
+=== 08:23:56 === host_cpu=31%
+enterprise-llm-tracker-kafka-1	112.13%
+enterprise-llm-tracker-postgres-1	5.16%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.93%
+=== 08:24:05 === host_cpu=82%
+enterprise-llm-tracker-kafka-1	93.32%
+enterprise-llm-tracker-postgres-1	20.25%
+enterprise-llm-tracker-otelcol-1	116.96%
+enterprise-llm-tracker-redis-1	81.32%
+=== 08:24:14 === host_cpu=96%
+enterprise-llm-tracker-kafka-1	149.17%
+enterprise-llm-tracker-postgres-1	11.25%
+enterprise-llm-tracker-otelcol-1	145.04%
+enterprise-llm-tracker-redis-1	79.81%
+=== 08:24:23 === host_cpu=93%
+enterprise-llm-tracker-kafka-1	91.44%
+enterprise-llm-tracker-postgres-1	6.73%
+enterprise-llm-tracker-otelcol-1	5.37%
+enterprise-llm-tracker-redis-1	86.88%
+=== 08:24:31 === host_cpu=74%
+enterprise-llm-tracker-kafka-1	92.97%
+enterprise-llm-tracker-postgres-1	10.10%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.40%
+=== 08:24:40 === host_cpu=69%
+enterprise-llm-tracker-kafka-1	310.04%
+enterprise-llm-tracker-postgres-1	6.50%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	20.11%
+=== 08:24:49 === host_cpu=66%
+enterprise-llm-tracker-kafka-1	89.97%
+enterprise-llm-tracker-postgres-1	3.48%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.49%
+=== 08:24:57 === host_cpu=80%
+enterprise-llm-tracker-kafka-1	223.73%
+enterprise-llm-tracker-postgres-1	5.05%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	16.97%
+=== 08:25:06 === host_cpu=65%
+enterprise-llm-tracker-kafka-1	202.03%
+enterprise-llm-tracker-postgres-1	6.20%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.44%
+=== 08:25:15 === host_cpu=71%
+enterprise-llm-tracker-kafka-1	115.29%
+enterprise-llm-tracker-postgres-1	6.42%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.27%
+=== 08:25:23 === host_cpu=68%
+enterprise-llm-tracker-kafka-1	94.26%
+enterprise-llm-tracker-postgres-1	12.01%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.58%
+=== 08:25:32 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	91.88%
+enterprise-llm-tracker-postgres-1	9.23%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.61%
+=== 08:25:41 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	137.64%
+enterprise-llm-tracker-postgres-1	5.12%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.07%
+=== 08:25:49 === host_cpu=77%
+enterprise-llm-tracker-kafka-1	91.47%
+enterprise-llm-tracker-postgres-1	5.26%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.40%
+=== 08:25:58 === host_cpu=57%
+enterprise-llm-tracker-kafka-1	99.51%
+enterprise-llm-tracker-postgres-1	9.27%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.19%
+=== 08:26:07 === host_cpu=68%
+enterprise-llm-tracker-kafka-1	61.55%
+enterprise-llm-tracker-postgres-1	4.59%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	20.05%
+=== 08:26:15 === host_cpu=52%
+enterprise-llm-tracker-kafka-1	128.10%
+enterprise-llm-tracker-postgres-1	6.96%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.95%
+=== 08:26:24 === host_cpu=54%
+enterprise-llm-tracker-kafka-1	47.54%
+enterprise-llm-tracker-postgres-1	4.30%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.05%
+=== 08:26:32 === host_cpu=49%
+enterprise-llm-tracker-kafka-1	55.89%
+enterprise-llm-tracker-postgres-1	4.67%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.09%
+=== 08:26:41 === host_cpu=53%
+enterprise-llm-tracker-kafka-1	104.57%
+enterprise-llm-tracker-postgres-1	5.26%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.31%
+=== 08:26:50 === host_cpu=38%
+enterprise-llm-tracker-kafka-1	252.61%
+enterprise-llm-tracker-postgres-1	6.08%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.68%
+=== 08:26:58 === host_cpu=36%
+enterprise-llm-tracker-kafka-1	47.47%
+enterprise-llm-tracker-postgres-1	10.74%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.45%
+=== 08:27:07 === host_cpu=40%
+enterprise-llm-tracker-kafka-1	253.46%
+enterprise-llm-tracker-postgres-1	4.59%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	17.89%
+=== 08:27:16 === host_cpu=32%
+enterprise-llm-tracker-kafka-1	343.59%
+enterprise-llm-tracker-postgres-1	6.71%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	17.65%
+=== 08:27:24 === host_cpu=52%
+enterprise-llm-tracker-kafka-1	279.74%
+enterprise-llm-tracker-postgres-1	11.57%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	17.73%
+=== 08:27:33 === host_cpu=37%
+enterprise-llm-tracker-kafka-1	221.62%
+enterprise-llm-tracker-postgres-1	6.30%
+enterprise-llm-tracker-otelcol-1	0.04%
+enterprise-llm-tracker-redis-1	19.94%
+=== 08:27:42 === host_cpu=38%
+enterprise-llm-tracker-kafka-1	138.36%
+enterprise-llm-tracker-postgres-1	5.88%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	19.19%
+=== 08:27:50 === host_cpu=59%
+enterprise-llm-tracker-kafka-1	393.68%
+enterprise-llm-tracker-postgres-1	5.78%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	18.33%
+=== 08:27:59 === host_cpu=49%
+enterprise-llm-tracker-kafka-1	48.35%
+enterprise-llm-tracker-postgres-1	5.38%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	16.78%
+=== 08:28:08 === host_cpu=51%
+enterprise-llm-tracker-kafka-1	153.99%
+enterprise-llm-tracker-postgres-1	4.47%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	19.07%
+=== 08:28:16 === host_cpu=52%
+enterprise-llm-tracker-kafka-1	27.83%
+enterprise-llm-tracker-postgres-1	4.72%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.69%
+=== 08:28:25 === host_cpu=26%
+enterprise-llm-tracker-kafka-1	156.17%
+enterprise-llm-tracker-postgres-1	5.21%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	12.28%
+=== 08:28:33 === host_cpu=28%
+enterprise-llm-tracker-kafka-1	29.84%
+enterprise-llm-tracker-postgres-1	479.62%
+enterprise-llm-tracker-otelcol-1	0.01%
+enterprise-llm-tracker-redis-1	27.63%
+=== 08:28:42 === host_cpu=99%
+enterprise-llm-tracker-kafka-1	22.91%
+enterprise-llm-tracker-postgres-1	6.82%
+enterprise-llm-tracker-otelcol-1	0.03%
+enterprise-llm-tracker-redis-1	86.23%
+=== 08:28:51 === host_cpu=94%
+enterprise-llm-tracker-kafka-1	22.56%
+enterprise-llm-tracker-postgres-1	19.83%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	84.77%
+=== 08:29:00 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	28.58%
+enterprise-llm-tracker-postgres-1	5.07%
+enterprise-llm-tracker-otelcol-1	0.14%
+enterprise-llm-tracker-redis-1	11.74%
+=== 08:29:08 === host_cpu=34%
+enterprise-llm-tracker-kafka-1	28.64%
+enterprise-llm-tracker-postgres-1	5.01%
+enterprise-llm-tracker-otelcol-1	0.03%
+enterprise-llm-tracker-redis-1	11.40%
+=== 08:29:17 === host_cpu=37%
+enterprise-llm-tracker-kafka-1	221.69%
+enterprise-llm-tracker-postgres-1	11.56%
+enterprise-llm-tracker-otelcol-1	0.24%
+enterprise-llm-tracker-redis-1	12.28%
+=== 08:29:26 === host_cpu=18%
+enterprise-llm-tracker-kafka-1	28.80%
+enterprise-llm-tracker-postgres-1	6.10%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.87%
+=== 08:29:34 === host_cpu=32%
+enterprise-llm-tracker-kafka-1	28.04%
+enterprise-llm-tracker-postgres-1	4.81%
+enterprise-llm-tracker-otelcol-1	0.02%
+enterprise-llm-tracker-redis-1	13.56%
+=== 08:29:43 === host_cpu=60%
+enterprise-llm-tracker-kafka-1	28.56%
+enterprise-llm-tracker-postgres-1	5.44%
+enterprise-llm-tracker-otelcol-1	0.04%
+enterprise-llm-tracker-redis-1	11.75%
+=== 08:29:52 === host_cpu=40%
+enterprise-llm-tracker-kafka-1	55.44%
+enterprise-llm-tracker-postgres-1	11.29%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	11.84%
+=== 08:30:00 === host_cpu=45%
+enterprise-llm-tracker-kafka-1	29.30%
+enterprise-llm-tracker-postgres-1	5.25%
+enterprise-llm-tracker-otelcol-1	0.00%
+enterprise-llm-tracker-redis-1	12.11%
