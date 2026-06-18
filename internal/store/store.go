@@ -20,16 +20,14 @@ type Store struct {
 	pg  *pgxpool.Pool
 	rdb *redis.Client
 
-	incrFloat *redis.Script
-	incrInt   *redis.Script
+	recordEvent *redis.Script
 }
 
 func New(pg *pgxpool.Pool, rdb *redis.Client) *Store {
 	return &Store{
-		pg:        pg,
-		rdb:       rdb,
-		incrFloat: redis.NewScript(mustLoadScript("incr_float_expire.lua")),
-		incrInt:   redis.NewScript(mustLoadScript("incr_int_expire.lua")),
+		pg:          pg,
+		rdb:         rdb,
+		recordEvent: redis.NewScript(mustLoadScript("record_event.lua")),
 	}
 }
 
@@ -57,16 +55,9 @@ func (s *Store) WriteEventRedis(ctx context.Context, e Event) error {
 	eod := endOfDayUTC(now).Unix()
 	eom := endOfMonthUTC(now).Unix()
 
+	cost := 0.0
 	if e.CostUSD != nil && *e.CostUSD > 0 {
-		cost := *e.CostUSD
-		if err := s.incrFloat.Run(ctx, s.rdb,
-			[]string{costKey(e.EngineerID, "today")}, cost, eod).Err(); err != nil {
-			return fmt.Errorf("redis cost:today: %w", err)
-		}
-		if err := s.incrFloat.Run(ctx, s.rdb,
-			[]string{costKey(e.EngineerID, "month")}, cost, eom).Err(); err != nil {
-			return fmt.Errorf("redis cost:month: %w", err)
-		}
+		cost = *e.CostUSD
 	}
 
 	tokens := 0
@@ -82,14 +73,21 @@ func (s *Store) WriteEventRedis(ctx context.Context, e Event) error {
 	if e.TokensCacheCreation != nil {
 		tokens += *e.TokensCacheCreation
 	}
-	if tokens > 0 {
-		if err := s.incrInt.Run(ctx, s.rdb,
-			[]string{tokensKey(e.EngineerID, "today")}, tokens, eod).Err(); err != nil {
-			return fmt.Errorf("redis tokens:today: %w", err)
-		}
-	}
 
-	_ = s.rdb.Set(ctx, lastOtelKey(e.EngineerID), now.Format(time.RFC3339), 0).Err()
+	// Single round trip: cost (today+month) + tokens (today) + last-seen, applied
+	// atomically server-side. Collapses what used to be up to 3 sequential Redis
+	// round trips on the ingest hot path into 1.
+	if err := s.recordEvent.Run(ctx, s.rdb,
+		[]string{
+			costKey(e.EngineerID, "today"),
+			costKey(e.EngineerID, "month"),
+			tokensKey(e.EngineerID, "today"),
+			lastOtelKey(e.EngineerID),
+		},
+		cost, eod, eom, tokens, now.Format(time.RFC3339),
+	).Err(); err != nil {
+		return fmt.Errorf("redis record event: %w", err)
+	}
 	return nil
 }
 

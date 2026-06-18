@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,9 +27,27 @@ import (
 
 const usageEventsPartitions = 12
 
+// setupLogger installs the default slog logger at a level taken from
+// SENTINEL_LOG_LEVEL (debug|info|warn|error), defaulting to info. Set it to
+// warn during load tests so the per-event usage_event INFO logs don't dominate
+// the hot path — that lets throughput reflect ingest work, not log I/O.
+func setupLogger() {
+	level := slog.LevelInfo
+	switch strings.ToLower(os.Getenv("SENTINEL_LOG_LEVEL")) {
+	case "debug":
+		level = slog.LevelDebug
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
+}
+
 func main() {
 	// .env is optional — in production, env vars come from the orchestrator.
 	_ = godotenv.Load()
+	setupLogger()
 
 	configPath := "sentinel.yaml"
 	if v := os.Getenv("SENTINEL_CONFIG"); v != "" {

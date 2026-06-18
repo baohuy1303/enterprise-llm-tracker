@@ -24,3 +24,4 @@ sentinel-admin/.env.local
 
 docs/
 run_tests.ps1
+stress_results
